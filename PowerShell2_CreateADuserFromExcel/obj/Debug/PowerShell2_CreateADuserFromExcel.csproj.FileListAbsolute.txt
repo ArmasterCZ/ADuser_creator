@@ -8,3 +8,6 @@ d:\users\jvaldauf\documents\visual studio 2015\Projects\PowerShell2_CreateADuser
 d:\users\jvaldauf\documents\visual studio 2015\Projects\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.exe
 d:\users\jvaldauf\documents\visual studio 2015\Projects\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.pdb
 d:\users\jvaldauf\documents\visual studio 2015\Projects\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\bin\Debug\System.Management.Automation.dll
+C:\Users\Armaster\Documents\Visual Studio 2015\github\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\bin\Debug\PowerShell2_CreateADuserFromExcel.exe.config
+C:\Users\Armaster\Documents\Visual Studio 2015\github\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.exe
+C:\Users\Armaster\Documents\Visual Studio 2015\github\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.pdb

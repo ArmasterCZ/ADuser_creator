@@ -35,6 +35,7 @@ namespace PowerShell2_CreateADuserFromExcel
          Verze
          0.00.01 - Basic design idea
          0.00.05 - method for create new AD user
+         0.00.23 - more parameters in ADuser class
 
          */
 
