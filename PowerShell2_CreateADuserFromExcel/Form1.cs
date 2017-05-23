@@ -29,6 +29,7 @@ namespace PowerShell2_CreateADuserFromExcel
         //user canot sort lines.
         //create Compare User
         //excel imput
+        //better test table
         //
 
         /*Info o verzi
