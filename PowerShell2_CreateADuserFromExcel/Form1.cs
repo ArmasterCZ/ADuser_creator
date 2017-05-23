@@ -17,7 +17,7 @@ namespace PowerShell2_CreateADuserFromExcel
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.23";
+        public string verze = "0.00.24";
         public Form1()
         {
             InitializeComponent();
@@ -31,12 +31,11 @@ namespace PowerShell2_CreateADuserFromExcel
         //excel imput
         //
 
-        /*
-         Verze
+        /*Info o verzi
          0.00.01 - Basic design idea
          0.00.05 - method for create new AD user
          0.00.23 - more parameters in ADuser class
-
+         0.00.24 - code cleanup 1/2
          */
 
         /* ----- test things ----- */
@@ -174,94 +173,6 @@ namespace PowerShell2_CreateADuserFromExcel
 
         private void PS_CreateNewUser(ADuser user1)
         {
-            //pokusí se vytvořit uživatele 1 část (bez hesla a disablovaného)
-            if (user1.nameAcco != "")
-            {
-                MessageBox.Show("bude vytvořen nový uživatel " + user1.QnameAcco);
-                //TODO: check all data here
-
-                using (var runspace = RunspaceFactory.CreateRunspace())
-                {
-                    using (var powerShell = PowerShell.Create())
-                    {
-                        log("Zápis uživatele do AD");
-                        powerShell.Runspace = runspace;
-                        powerShell.Runspace.Open();
-
-                        //vkládání proměných
-                        powerShell.AddScript("$nameAccout = " + user1.QnameAcco);
-                        powerShell.AddScript("$nameGiven = " + user1.QnameGiven);
-                        powerShell.AddScript("$nameSurn = " + user1.QnameSurn);
-                        powerShell.AddScript("$nameFull = " + user1.QnameFull);
-                        powerShell.AddScript("$office = " + user1.Qoffice);
-                        powerShell.AddScript("$description = " + user1.Qdescription);
-                        //powerShell.AddScript("$department = "" );
-                        //powerShell.AddScript("$vedouci =  "" );
-                        powerShell.AddScript("$password = " + user1.Qpassword);
-                        powerShell.AddScript("$tel = " + user1.Qtel);
-                        powerShell.AddScript("$mob = " + user1.Qmob);
-                        //nezapisuje kartu
-                        //powerShell.AddScript("$pager =" + @"""k""");
-                        //powerShell.AddScript("$otherPager =" + user1.cardNumber);
-
-                        //založi uživatele
-                        powerShell.AddScript("New-ADUser " +
-                            "-name $nameFull " +
-                            "-displayName $nameFull " +
-                            "-sAMAccountName $nameAccout " +
-                            "-givenName $nameGiven " +
-                            "-Surname $nameSurn " +
-                            "-title $description " +
-                            /*"-department $department " +*/
-                            "-Description $description " +
-                            "-Office $office " +
-                            "-officephone $tel " +
-                            "-mobile $mob ");
-
-                        //nastaví heslo, enabluje uživatele, nepotřebuje měnit heslo.
-                        powerShell.AddScript("Set-ADUser -Identity $nameAccout -ChangePasswordAtLogon $false -PasswordNeverExpires $true");
-                        powerShell.AddScript("Set-ADAccountPassword -Identity $nameAccout -Reset -NewPassword (ConvertTo-SecureString -AsPlainText $password -Force)");
-                        powerShell.AddScript("Enable-ADAccount -Identity $nameAccout");
-
-                        //nastaví katru
-                        if (user1.cardNumber != "")
-                        {
-                            powerShell.AddScript("$pager = " + @"""k""");
-                            powerShell.AddScript("$otherPager =" + user1.QcardNumber);
-                            powerShell.AddScript("Set-ADUser $nameAccout -Replace @{pager=$pager;otherPager=$otherPager}");
-                            //powerShell.AddScript("Set-ADUser " + '"' + user1.userNameAcco + '"' + " -Replace @{pager= " + '"' + "k" + '"' + ";otherPager=" + '"' + user1.cardNumberFull + '"' + "}");
-                        }
-
-                        powerShell.Invoke();
-
-                        if (powerShell.HadErrors == true)
-                        {
-                            log("Error. Chyba při vytváření uživatele.");
-                            MessageBox.Show("Error. Chyba při vytváření uživatele.");
-                            var test = powerShell.Streams.Error.ElementAt(0).Exception.Message;
-                            MessageBox.Show("" + test);
-                            /*foreach (var error in PowerShell.Streams.Error)
-                            {
-                            }*/
-                        } else
-                        {
-                            log("Hotovo. Uživatel vytvořen.");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                MessageBox.Show("Error. Nebylo možné vytvořit uživatele. Prázdné jméno!");
-                log("Error. Nebylo možné vytvořit uživatele. Prázdné jméno!");
-            }
-        }
-
-        private void PS_CreateNewUser_V2(ADuser user1)
-        {
-            //V2 - nová errorová hláška pro všechny errory + vynechání prázdných polí při zakládání uživatele
-            //oprava userPrincipalName
-
             /*
             $nameAccout = "testUser7"
             $nameFull = "test User 7"
@@ -930,7 +841,7 @@ namespace PowerShell2_CreateADuserFromExcel
                     //založení uživatele
                     //TODO: delete data from row 1
                     ADuser newUser = createUserFromRow(0);
-                    PS_CreateNewUser_V2(newUser);
+                    PS_CreateNewUser(newUser);
                 }
 
             } else
