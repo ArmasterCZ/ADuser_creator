@@ -17,7 +17,8 @@ namespace PowerShell2_CreateADuserFromExcel
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.24";
+        public string verze = "0.00.25";
+        public string filePath;
         public Form1()
         {
             InitializeComponent();
@@ -596,8 +597,23 @@ namespace PowerShell2_CreateADuserFromExcel
         {
             Dictionary<string, string> props = new Dictionary<string, string>();
 
-            string fileName = "info.xls";
-            string filePath = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), fileName);
+            //zkontroluje zda cesta existuje
+
+            string textboxText = ts_TextBox2.Text;
+
+            if (textboxText == "" | textboxText == "...")
+            {
+                filePath = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xls");
+                MessageBox.Show("Nebyla vyplněna cesta k souboru.", "Otázka", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
+            else
+            {
+                filePath = textboxText;
+                if (!File.Exists(filePath))
+                {
+                    MessageBox.Show("Zadaný soubor nebyl nalezen.", "Upozornění", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
 
             // XLSX - Excel 2007, 2010, 2012, 2013
             props["Provider"] = "Microsoft.ACE.OLEDB.12.0";
@@ -913,6 +929,12 @@ namespace PowerShell2_CreateADuserFromExcel
                 //MessageBox.Show("zmačknuto ctrl+S");
                 bWrite_Click(sender, e);
             }
+        }
+
+        private void TS_getPath_Click(object sender, EventArgs e)
+        {
+            //vyplní cestu (z horního menu) aktuální pozicí souboru
+            ts_TextBox2.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "data.xls");
         }
     }
 }
