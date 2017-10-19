@@ -12,118 +12,140 @@ namespace PowerShell2_CreateADuserFromExcel
         public string nameSurn; //příjmení
         public string nameFull; //Příjmení + křestní
         public string nameAcco; //uživatelské jméno (jvaldauf)
-        public string description;  // pozice (ADMINISTRATOR) [= Title] 
+
+        private string namePrincipal; //Sam + @sitel.cz
+        public string description;  // pozice (ADMINISTRATOR) [= description] 
+        public string title;        //pozice (ADMINISTRATOR) [= Title] 
         public string office;   //středisko (17120)
+        public string department;   // občas např (17000)
         public string tel;      //telefon
+        public string telOthers;//další telefony
         public string mob;      //mobil
         public string cardNumber;   //číslo karty
         public string cardHave;     //info ke katě
-        public string leader;       //vedoucí
         public string password;     //heslo
-        //public string title;    //pozice (ADMINISTRATOR) [= description] 
-        //public string department;   // občas např (17000)
+        public string emailAddress; //email
+        public string manager;      //vedoucí
+        public string managerFull;  //vedoucí DistinguishedName (CN=test User 8,OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz)
+        public string path;         //cesta ke kontejneru
+        public bool ChangePasswordAtLogon;
+        public bool CannotChangePassword;
+        public bool PasswordNeverExpires;
+        public bool Enabled;
 
-        public string QnameGiven
+        //public string QnameGiven
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.nameGiven + @"""";
+        //    }
+        //}
+
+        //public string QnameSurn
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.nameSurn + @"""";
+        //    }
+        //}
+
+        //public string QnameFull
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.nameFull + @"""";
+        //    }
+        //}
+
+        //public string QnameAcco
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.nameAcco + @"""";
+        //    }
+        //}
+
+        //public string Qdescription
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.description + @"""";
+        //    }
+        //}
+
+        //public string Qoffice
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.office + @"""";
+        //    }
+        //}
+
+        //public string Qtel
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.tel + @"""";
+        //    }
+        //}
+
+        //public string Qmob
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.mob + @"""";
+        //    }
+        //}
+
+        //public string QcardNumber
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.cardNumber + @"""";
+        //    }
+        //}
+
+        //public string QcardFullNumber
+        //{
+        //    get
+        //    {
+        //        return @"""" + converterToFullCardNumber(this.cardNumber) + @"""";
+        //    }
+        //}
+
+        //public string QcardHave
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.cardHave + @"""";
+        //    }
+        //}
+
+        //public string Qpassword
+        //{
+        //    get
+        //    {
+        //        return @"""" + this.password + @"""";
+        //    }
+        //}
+
+        public string cardFullNumber
         {
+            set
+            {
+                this.cardNumber = converterFromFullCardNumber(value);
+            }
             get
             {
-                return @"""" + this.nameGiven + @"""";
+                return converterToFullCardNumber(this.cardNumber);
             }
         }
 
-        public string QnameSurn
+        public string NamePrincipal
         {
             get
             {
-                return @"""" + this.nameSurn + @"""";
-            }
-        }
-
-        public string QnameFull
-        {
-            get
-            {
-                return @"""" + this.nameFull + @"""";
-            }
-        }
-
-        public string QnameAcco
-        {
-            get
-            {
-                return @"""" + this.nameAcco + @"""";
-            }
-        }
-
-        public string Qdescription
-        {
-            get
-            {
-                return @"""" + this.description + @"""";
-            }
-        }
-
-        public string Qoffice
-        {
-            get
-            {
-                return @"""" + this.office + @"""";
-            }
-        }
-
-        public string Qtel
-        {
-            get
-            {
-                return @"""" + this.tel + @"""";
-            }
-        }
-
-        public string Qmob
-        {
-            get
-            {
-                return @"""" + this.mob + @"""";
-            }
-        }
-
-        public string QcardNumber
-        {
-            get
-            {
-                return @"""" + this.cardNumber + @"""";
-            }
-        }
-
-        public string QcardFullNumber
-        {
-            get
-            {
-                return @"""" + converterToCardNumber(this.cardNumber) + @"""";
-            }
-        }
-
-        public string QcardHave
-        {
-            get
-            {
-                return @"""" + this.cardHave + @"""";
-            }
-        }
-
-        public string Qleader
-        {
-            get
-            {
-                return @"""" + this.leader + @"""";
-            }
-        }
-
-        public string Qpassword
-        {
-            get
-            {
-                return @"""" + this.password + @"""";
+                return (this.nameAcco + "@sitel.cz");
             }
         }
 
@@ -154,46 +176,53 @@ namespace PowerShell2_CreateADuserFromExcel
             this.nameSurn = user1.nameSurn;
             this.nameFull = user1.nameFull;
             this.nameAcco = user1.nameAcco;
+            this.namePrincipal = user1.namePrincipal;
             this.description = user1.description;
+            this.title = user1.title;
             this.office = user1.office;
-            this.leader = user1.leader;
+            this.department = user1.department;
             this.tel = user1.tel;
+            this.telOthers = user1.telOthers;
             this.mob = user1.mob;
             this.cardNumber = user1.cardNumber;
             this.cardHave = user1.cardHave;
             this.password = user1.password;
+            this.emailAddress = user1.emailAddress;
+            this.manager = user1.manager;
+            this.managerFull = user1.managerFull;
+            this.path = user1.path;
+            this.ChangePasswordAtLogon = user1.CannotChangePassword;
+            this.CannotChangePassword = user1.CannotChangePassword;
+            this.PasswordNeverExpires = user1.PasswordNeverExpires;
+            this.Enabled = user1.Enabled;
         }
 
         public ADuser(string nameAcco)
         {
+            //vytvoří prázdného uživatele jen s jménem
             this.nameGiven = "";
             this.nameSurn = "";
-            this.nameAcco = nameAcco;
             this.nameFull = "";
+            this.nameAcco = nameAcco;
+            this.namePrincipal = "";
+            this.description = "";
+            this.title = "";
+            this.office = "";
+            this.department = "";
             this.tel = "";
+            this.telOthers = "";
             this.mob = "";
             this.cardNumber = "";
             this.cardHave = "";
-            this.leader = "";
-            this.description = "";
-            this.office = "";
             this.password = "";
-        }
-
-        public ADuser(string nameGiven, string nameSurn, string nameFull, string nameAcco, string office, string description, string tel, string mob, string cardNumber, string password)
-        {
-            this.nameGiven = nameGiven;
-            this.nameSurn = nameSurn;
-            this.nameAcco = nameAcco;
-            this.nameFull = nameFull;
-            this.tel = tel;
-            this.mob = mob;
-            this.cardNumber = cardNumber;
-            this.cardHave = "";
-            this.leader = "";
-            this.description = description;
-            this.office = office;
-            this.password = password;
+            this.emailAddress = "";
+            this.manager = "";
+            this.managerFull = "";
+            this.path = "";
+            this.ChangePasswordAtLogon = false;
+            this.CannotChangePassword = false;
+            this.PasswordNeverExpires = false;
+            this.Enabled = false;
         }
 
         public string[] toField()
@@ -208,14 +237,25 @@ namespace PowerShell2_CreateADuserFromExcel
             this.nameSurn = "";
             this.nameFull = "";
             this.nameAcco = "";
+            this.namePrincipal = "";
             this.description = "";
+            this.title = "";
             this.office = "";
-            this.leader = "";
+            this.department = "";
             this.tel = "";
+            this.telOthers = "";
             this.mob = "";
             this.cardNumber = "";
             this.cardHave = "";
             this.password = "";
+            this.emailAddress = "";
+            this.manager = "";
+            this.managerFull = "";
+            this.path = "";
+            this.ChangePasswordAtLogon = false;
+            this.CannotChangePassword = false;
+            this.PasswordNeverExpires = false;
+            this.Enabled = false;
         }
 
         public override string ToString()
@@ -223,7 +263,7 @@ namespace PowerShell2_CreateADuserFromExcel
             return "User: " + nameFull + " .";
         }
 
-        private string converterToCardNumber(string number)
+        private string converterToFullCardNumber(string number)
         {
             //převádí číslo z desítkové soustavy do Hexadecimální
             string finalNumber = "81AE04C300000";
@@ -240,6 +280,27 @@ namespace PowerShell2_CreateADuserFromExcel
             return finalNumber;
         }
 
+        private string converterFromFullCardNumber(string number)
+        {
+            //převádí číslo z Hexadecimální soustavy do desítkové
+            string finalNumber = "";
+            try
+            {
+                //if (number.Length == 16)
+                if (number.Length >= 4)
+                {
+                    string lastCharacters = number.Substring(number.Length - 3);
+                    finalNumber = "" + int.Parse(lastCharacters, System.Globalization.NumberStyles.HexNumber).ToString();
+                }
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+
+            return finalNumber;
+        }
+        
     }
 
 }

@@ -12,12 +12,14 @@ using System.Management.Automation.Runspaces;
 using System.IO;
 using System.Data.Odbc;
 using System.Data.OleDb;
+using ExtensionMethods;
+using System.Globalization;
 
 namespace PowerShell2_CreateADuserFromExcel
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.25";
+        public string verze = "0.00.36";
         public string filePath;
         public Form1()
         {
@@ -27,10 +29,11 @@ namespace PowerShell2_CreateADuserFromExcel
         }
 
         //TODO: 
-        //user canot sort lines.
+        //user canot sort lines (but can :/ ).
         //create Compare User
-        //excel imput
         //better test table
+        //add log (uložení do texťáku), vypsat celý powershellový skript, první řádka datum a čas, dále odrážka kvůli čitelnosti.
+        //opravit bugy -> funkci (ctrl+C,ctrl+V), 
         //
 
         /*Info o verzi
@@ -38,6 +41,16 @@ namespace PowerShell2_CreateADuserFromExcel
          0.00.05 - method for create new AD user
          0.00.23 - more parameters in ADuser class
          0.00.24 - code cleanup 1/2
+         0.00.25 - custom patch for excel load
+         0.00.27 - added move user function
+         0.00.28 - add metod addQuotes, PS_SearchUser_Identity
+         0.00.29 - more ADuser parameters (otherTelephone, EmailAddress, manager)
+         0.00.30 - better PS script for write user
+         0.00.31 - bug fixed, additional parameters to load from excel
+         0.00.32 - automatické doplňování tabulky
+         0.00.32 - bugfix: kopírovat do horního řádku v kolonce path pouze cestu. odstranění začáteku textu 
+         0.00.34 - added right click menu for container move
+         0.00.35 - remove diacritic from username (in autocomplete), added split from full name to first and second cell.
          */
 
         /* ----- test things ----- */
@@ -70,8 +83,8 @@ namespace PowerShell2_CreateADuserFromExcel
 
         private void createUser() //test
         {
-            ADuser user1 = new ADuser("Jaroslav", "Prchlík", "Prchlík Jaroslav", "jprchlik", "11230", "Tábor", "Zamestnanec", "100", "766 234 776", "123456Aa");
-            ADuser user2 = new ADuser("Jiří", "Hlavatý", "Hlavatý Jiří", "jhlavaty", "11020", "Projekty UPC", "Neucetni", "217", "", "");
+            //ADuser user1 = new ADuser("Jaroslav", "Prchlík", "Prchlík Jaroslav", "jprchlik", "11230", "Tábor", "Zamestnanec", "100", "766 234 776", "123456Aa");
+            //ADuser user2 = new ADuser("Jiří", "Hlavatý", "Hlavatý Jiří", "jhlavaty", "11020", "Projekty UPC", "Neucetni", "217", "", "");
         }
 
         private void displayRefresh() //zakázání editace řádků
@@ -124,7 +137,46 @@ namespace PowerShell2_CreateADuserFromExcel
                 );
         }
 
+        #region PowerShell
         /* ----- (powershell script) ----- */
+
+        private string PS_SearchUser_Identity(string nameSamAccount)
+        {
+            //spustí PowerShell script na vyhledání identity uživatele na základě jména (využití pro přiřazení manažera)
+            string identity = "";
+
+            if (nameSamAccount != "")
+            {
+                using (var runspace = RunspaceFactory.CreateRunspace())
+                {
+                    using (var powerShell = PowerShell.Create())
+                    {
+                        log("Hledám identitu manažera: " + nameSamAccount);
+                        powerShell.Runspace = runspace;
+                        powerShell.Runspace.Open();
+                        powerShell.AddScript("$managerFull = Get-ADUser -Identity " + nameSamAccount.addQuotes());
+                        powerShell.AddScript("$managerFull.DistinguishedName");
+                        PSObject[] results = powerShell.Invoke().ToArray();
+                        identity = results[0].BaseObject.ToString();
+                        if (identity == "")
+                        {
+                            log("Error. Manažer nenalezen.");
+                        }
+                        else
+                        {
+                            log("Hledání Manažera dokončeno.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Error. Nebylo možné vyhledat manažera. Prázdné jméno!");
+                log("Error. Nebylo možné vyhledat manažera. Prázdné jméno!");
+            }
+
+            return identity;
+        }
 
         private ADuser PS_SearchUser_UserName(ADuser user1)
         {
@@ -136,7 +188,8 @@ namespace PowerShell2_CreateADuserFromExcel
                     using (var powerShell = PowerShell.Create())
                     {
                         log("Hledám uživatele podle jména");
-                        string script = @"Get-ADUser -filter 'sAMAccountName -like """ + user1.nameAcco + @"""' -Properties givenName, Surname, name, sAMAccountName, title, PhysicalDeliveryOfficeName, pager, otherPager, mobile, TelephoneNumber | select givenName, Surname, name, sAMAccountName, title, PhysicalDeliveryOfficeName, pager, mobile, TelephoneNumber, @{name=""otherPager"";expression={$_.otherPager -join "";""}}";
+                        //string script = @"Get-ADUser -filter 'sAMAccountName -like """ + user1.nameAcco + @"""' -Properties givenName, Surname, name, sAMAccountName, title, PhysicalDeliveryOfficeName, pager, otherPager, mobile, TelephoneNumber | select givenName, Surname, name, sAMAccountName, title, PhysicalDeliveryOfficeName, pager, mobile, TelephoneNumber, @{name=""otherPager"";expression={$_.otherPager -join "";""}}";
+                        string script = @"Get-ADUser -filter 'sAMAccountName -like """ + user1.nameAcco + @"""' -Properties * | select givenName, Surname, name, sAMAccountName, title, PhysicalDeliveryOfficeName, pager, mobile, TelephoneNumber,EmailAddress,description,CannotChangePassword,PasswordNeverExpires,Enabled,Path,department,distinguishedName,pwdlastset, @{name='otherPager';expression={$_.otherPager -join ';'}},@{name='otherTelephone';expression={$_.otherTelephone -join ';'}},@{N='Manager';E={(Get-ADUser $_.Manager).sAMAccountName}}";
 
                         powerShell.Runspace = runspace;
                         powerShell.Runspace.Open();
@@ -149,16 +202,34 @@ namespace PowerShell2_CreateADuserFromExcel
                             try { user1.nameSurn = result.Members["Surname"].Value.ToString(); } catch { }
                             try { user1.nameFull = result.Members["name"].Value.ToString(); } catch { }
                             try { user1.nameAcco = result.Members["sAMAccountName"].Value.ToString(); } catch { }
-                            try { user1.cardNumber = result.Members["otherPager"].Value.ToString(); } catch { }
+                            try { user1.cardFullNumber = result.Members["otherPager"].Value.ToString(); } catch { }
                             try { user1.office = result.Members["PhysicalDeliveryOfficeName"].Value.ToString(); } catch { }
-                            try { user1.description = result.Members["title"].Value.ToString(); } catch { }
+                            try { user1.title = result.Members["title"].Value.ToString(); } catch { }
+                            try { user1.description = result.Members["description"].Value.ToString(); } catch { }
                             try { user1.tel = result.Members["TelephoneNumber"].Value.ToString(); } catch { }
                             try { user1.mob = result.Members["mobile"].Value.ToString(); } catch { }
+                            try { user1.emailAddress = result.Members["EmailAddress"].Value.ToString(); } catch { }
+                            try
+                            { //ChangePasswordAtLogon
+                                if (Convert.ToInt32(result.Members["pwdlastset"].Value) == 0)
+                                {
+                                    user1.ChangePasswordAtLogon = true;
+                                }
+                            }
+                            catch { } //nefunguje
+                            try { if (Convert.ToBoolean(result.Members["CannotChangePassword"].Value) == true) { user1.CannotChangePassword = true; } } catch { }
+                            try { if (Convert.ToBoolean(result.Members["PasswordNeverExpires"].Value) == true) { user1.PasswordNeverExpires = true; } } catch { }
+                            try { if (Convert.ToBoolean(result.Members["Enabled"].Value) == true) { user1.Enabled = true; } } catch { }
+                            try { user1.path = result.Members["distinguishedName"].Value.ToString(); } catch { }
+                            try { user1.department = result.Members["department"].Value.ToString(); } catch { }
+                            try { user1.telOthers = result.Members["otherTelephone"].Value.ToString(); } catch { }
+                            try { user1.manager = result.Members["Manager"].Value.ToString(); } catch { }
                         }
                         if (user1.nameAcco == "")
                         {
                             log("Error. Uživatel nenalezen.");
-                        } else
+                        }
+                        else
                         {
                             log("Hledani uživatele podle jména dokončeno");
                         }
@@ -175,26 +246,15 @@ namespace PowerShell2_CreateADuserFromExcel
 
         private void PS_CreateNewUser(ADuser user1)
         {
-            /*
-            $nameAccout = "testUser7"
-            $nameFull = "test User 7"
-            $nameLogin = "testUser7@sitel.cz"
-            $nameGiven = "test"
-            $nameSurn = "User 7"
-            $description = "tester"
-            $office = "10000"
-            $tel = "000 000 000"
-            $mob = "000 000 000"
+            //pokusí se najít identifikační údaje k manažerovy
+            if (user1.manager != "")
+            {
+                user1.managerFull = PS_SearchUser_Identity(user1.manager);
+            }
 
-            New-ADUser -name $nameFull -displayName $nameFull -sAMAccountName $nameAccout -userPrincipalName $nameLogin -givenName $nameGiven -Surname $nameSurn -title $description -Description $description -Office $office -officephone $tel -mobile $mob
-            */
-
-            //pokusí se vytvořit uživatele 1 část (bez hesla a disablovaného)
+            //pokusí se vytvořit uživatele
             if (user1.nameAcco != "")
             {
-                //MessageBox.Show("bude vytvořen nový uživatel " + user1.QnameAcco);
-                //TODO: check all data here
-
                 string mainScript;
 
                 using (var runspace = RunspaceFactory.CreateRunspace())
@@ -205,75 +265,97 @@ namespace PowerShell2_CreateADuserFromExcel
                         powerShell.Runspace = runspace;
                         powerShell.Runspace.Open();
 
-                        //vkládání proměných
-                        powerShell.AddScript("$nameAccout = " + user1.QnameAcco); 
-                        powerShell.AddScript("$nameFull = " + user1.QnameFull);
-                        powerShell.AddScript(@"$nameLogin = """ + user1.nameAcco + @"@sitel.cz""");
-                        
                         //sestavení skriptu pro vytvoření uživatele (ošetření prázdných proměných)
-                        mainScript = "New-ADUser -name $nameFull -displayName $nameFull -sAMAccountName $nameAccout -userPrincipalName $nameLogin ";
+                        mainScript = "$user = @{ ";
+                        mainScript += "    Name = " + user1.nameFull.addQuotes() + ";";
+                        mainScript += "    SamAccountName = " + user1.nameAcco.addQuotes() + ";";
+                        mainScript += "    UserPrincipalName = " + user1.NamePrincipal.addQuotes() + ";";
+                        mainScript += "    displayName = " + user1.nameFull.addQuotes() + ";";
+
                         if (user1.nameGiven != "")
                         {
-                            mainScript += "-givenName $nameGiven ";
-                            powerShell.AddScript("$nameGiven = " + user1.QnameGiven);
+                            mainScript += "    GivenName = " + user1.nameGiven.addQuotes() + ";";
                         }
                         if (user1.nameSurn != "")
                         {
-                            mainScript += "-Surname $nameSurn ";
-                            powerShell.AddScript("$nameSurn = " + user1.QnameSurn);
+                            mainScript += "    Surname = " + user1.nameSurn.addQuotes() + ";";
                         }
-                        if (user1.description != "")
+                        if (user1.password != "")
                         {
-                            mainScript += "-title $description ";
-                            mainScript += "-Description $description ";
-                            powerShell.AddScript("$description = " + user1.Qdescription);
+                            mainScript += "    AccountPassword = (" + user1.password.addQuotes() + " | ConvertTo-SecureString -AsPlainText -Force)" + ";";
+                        }
+                        if (user1.emailAddress != "")
+                        {
+                            mainScript += "    EmailAddress = " + user1.emailAddress.addQuotes() + ";";
                         }
                         if (user1.office != "")
                         {
-                            mainScript += "-Office $office ";
-                            powerShell.AddScript("$office = " + user1.Qoffice);
+                            mainScript += "    Office = " + user1.office.addQuotes() + ";";
+                        }
+                        if (user1.department != "")
+                        {
+                            mainScript += "    Department = " + user1.department.addQuotes() + ";";
                         }
                         if (user1.tel != "")
                         {
-                            mainScript += "-officephone $tel ";
-                            powerShell.AddScript("$tel = " + user1.Qtel);
+                            mainScript += "    officephone = " + user1.tel.addQuotes() + ";";
                         }
                         if (user1.mob != "")
                         {
-                            mainScript += "-mobile $mob ";
-                            powerShell.AddScript("$mob = " + user1.Qmob);
+                            mainScript += "    mobile = " + user1.mob.addQuotes() + ";";
                         }
+                        if (user1.title != "")
+                        {
+                            mainScript += "    Title = " + user1.description.addQuotes() + ";";
+                        }
+                        if (user1.description != "")
+                        {
+                            mainScript += "    Description = " + user1.description.addQuotes() + ";";
+                        }
+                        if (user1.managerFull != "")
+                        {
+                            mainScript += "    Manager = " + user1.managerFull.addQuotes() + ";";
+                        }
+                        if (user1.path != "")
+                        {
+                            mainScript += "    Path = " + user1.path.addQuotes() + ";";
+                        }
+                        if (user1.ChangePasswordAtLogon)
+                        {
+                            mainScript += "    ChangePasswordAtLogon = " + user1.ChangePasswordAtLogon.addQuotes() + ";";
+                        }
+                        if (user1.CannotChangePassword)
+                        {
+                            mainScript += "    CannotChangePassword = " + user1.CannotChangePassword.addQuotes() + ";";
+                        }
+                        if (user1.PasswordNeverExpires)
+                        {
+                            mainScript += "    PasswordNeverExpires = " + user1.PasswordNeverExpires.addQuotes() + ";";
+                        }
+                        if (user1.Enabled)
+                        {
+                            mainScript += "    Enabled = " + user1.Enabled.addQuotes() + ";";
+                        }
+                        if (true)
+                        {
+                            mainScript += "    OtherAttributes = @{";
+                            mainScript += "        'Comment' = " + (DateTime.Now.ToString("yyyy/MM/dd") + "_created_by_script2").addQuotes() + ";";
+                            if (user1.telOthers != "")
+                            {
+                                mainScript += "        'otherTelephone'= " + user1.telOthers.addQuotes() + ";";
+                            }
+                            if (user1.cardNumber != "")
+                            {
+                                mainScript += "'Pager' = 'k'" + ";";
+                                mainScript += "'otherPager' = " + user1.cardFullNumber.addQuotes() + ";";
+                            }
+                            mainScript += "    }" + ";";
+                        }
+                        mainScript += "}" + ";";
 
                         //založi uživatele
                         powerShell.AddScript(mainScript);
-
-                        //nastaví heslo, enabluje uživatele, potřeba změnit heslo při dalším přihlášení
-                        if (user1.password != "")
-                        {
-                            powerShell.AddScript("$password = " + user1.Qpassword);
-                            powerShell.AddScript("Set-ADUser -Identity $nameAccout -ChangePasswordAtLogon $true -PasswordNeverExpires $false");
-                            powerShell.AddScript("Set-ADAccountPassword -Identity $nameAccout -Reset -NewPassword (ConvertTo-SecureString -AsPlainText $password -Force)");
-                            powerShell.AddScript("Enable-ADAccount -Identity $nameAccout");
-                        }
-
-                        //nastaví katru
-                        if (user1.cardNumber != "")
-                        {
-                            powerShell.AddScript("$pager = " + @"""k""");
-                            powerShell.AddScript("$otherPager =" + user1.QcardFullNumber);
-                            powerShell.AddScript("Set-ADUser $nameAccout -Replace @{pager=$pager;otherPager=$otherPager}");
-                            //powerShell.AddScript("Set-ADUser $nameAccout -Replace @{pager=$pager;otherPager=$otherPager}");
-                            //powerShell.AddScript("Set-ADUser " + '"' + user1.userNameAcco + '"' + " -Replace @{pager= " + '"' + "k" + '"' + ";otherPager=" + '"' + user1.cardNumberFull + '"' + "}");
-                        }
-
-                        //nastaví koment
-                        if (true)
-                        {
-                            //mainScript += "-comment $koment ";// neobsahuje příkaz comment
-                            powerShell.AddScript("$koment = " + @"""" + (DateTime.Now.ToString("yyyy/MM/dd") + "_created_by_script1") + @"""");
-                            powerShell.AddScript("Set-ADuser -identity $nameAccout -Replace @{comment= $koment}");
-                        }
-
+                        powerShell.AddScript("New-ADUser @User");
                         powerShell.Invoke();
 
                         if (powerShell.HadErrors == true)
@@ -284,7 +366,7 @@ namespace PowerShell2_CreateADuserFromExcel
                             //MessageBox.Show("" + test);
                             foreach (var error in powerShell.Streams.Error)
                             {
-                                DialogResult nextmessage = MessageBox.Show("" + error,"Error",MessageBoxButtons.OKCancel);
+                                DialogResult nextmessage = MessageBox.Show("" + error, "Error v Powershellu. Detailed message.", MessageBoxButtons.OKCancel);
                                 if (nextmessage == DialogResult.Cancel)
                                     break;
                             }
@@ -300,6 +382,53 @@ namespace PowerShell2_CreateADuserFromExcel
             {
                 MessageBox.Show("Error. Nebylo možné vytvořit uživatele. Prázdné jméno!");
                 log("Error. Nebylo možné vytvořit uživatele. Prázdné jméno!");
+            }
+        }
+
+        private void PS_MoveUser(ADuser user1, string nameContainer)
+        {
+            //přesune uživatele do jiného kontejneru v AD
+
+            if (user1.nameAcco != "")
+            {
+                using (var runspace = RunspaceFactory.CreateRunspace())
+                {
+                    using (var powerShell = PowerShell.Create())
+                    {
+                        log("přesouvám uživatele do jiného kontejneru.");
+                        powerShell.Runspace = runspace;
+                        powerShell.Runspace.Open();
+
+                        //ukázka skriptu
+                        //Get-ADUser ftester | Move-ADObject -TargetPath 'OU=Users,OU=People,OU=Company,DC=sitel,DC=cz'
+
+                        //přesune uživatele
+                        powerShell.AddScript("Get-ADUser " + user1.nameAcco + " | Move-ADObject -TargetPath '" + nameContainer + "'");
+
+                        powerShell.Invoke();
+
+                        if (powerShell.HadErrors == true)
+                        {
+                            log("Error. Chyba při přesouvání uživatele.");
+                            MessageBox.Show("Error. Chyba při přesouvání uživatele.");
+                            foreach (var error in powerShell.Streams.Error)
+                            {
+                                DialogResult nextmessage = MessageBox.Show("" + error, "Error", MessageBoxButtons.OKCancel);
+                                if (nextmessage == DialogResult.Cancel)
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            log("Hotovo. Uživatel přesunut.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Error. Nebylo možné přesunout uživatele. Prázdné jméno!");
+                log("Error. Nebylo možné přesunout uživatele. Prázdné jméno!");
             }
         }
 
@@ -456,6 +585,9 @@ namespace PowerShell2_CreateADuserFromExcel
             }
         }*/
 
+        #endregion
+
+        #region Ostatní
         /* ----- ( ostatní) ----- */
 
         DataTable dataTableShow1;
@@ -471,12 +603,22 @@ namespace PowerShell2_CreateADuserFromExcel
             dataTableShow1.Columns.Add("Příjmení", typeof(string));
             dataTableShow1.Columns.Add("Plné jméno", typeof(string));
             dataTableShow1.Columns.Add("Username", typeof(string));
-            dataTableShow1.Columns.Add("Pozice", typeof(string));
+            dataTableShow1.Columns.Add("Kancelář", typeof(string));
             dataTableShow1.Columns.Add("Středisko", typeof(string));
             dataTableShow1.Columns.Add("Tel", typeof(string));
+            dataTableShow1.Columns.Add("TelOstatní", typeof(string));
             dataTableShow1.Columns.Add("Mob", typeof(string));
+            dataTableShow1.Columns.Add("Popis", typeof(string));
+            dataTableShow1.Columns.Add("Pozice", typeof(string));
             dataTableShow1.Columns.Add("Karta", typeof(string));
+            dataTableShow1.Columns.Add("Email", typeof(string));
+            dataTableShow1.Columns.Add("Manager", typeof(string));
             dataTableShow1.Columns.Add("Heslo", typeof(string));
+            dataTableShow1.Columns.Add("Path", typeof(string));
+            dataTableShow1.Columns.Add("ChangePasswordAtLogon", typeof(bool));
+            dataTableShow1.Columns.Add("CannotChangePassword", typeof(bool));
+            dataTableShow1.Columns.Add("PasswordNeverExpires", typeof(bool));
+            dataTableShow1.Columns.Add("Enabled", typeof(bool));
 
             dataTableShow1.Rows.Add();
 
@@ -495,35 +637,34 @@ namespace PowerShell2_CreateADuserFromExcel
             dataGridView1.Columns[10].Width = 95;
         }
 
-        private void log(string message)
-        {
-            if (!label_Actual.Text.Contains("Error"))
-            {
-                label_Actual.Text = message;
-            }
-
-        }
-
-        private void dataTableWriteUser(int row,string ADorEXC, ADuser user1)
+        private void dataTableWriteUser(int row, string ADorEXC, ADuser aduser1)
         {
             if (dataTableShow1.Rows.Count > row)
             {
-                log("-vyplnění řádku v tabulce");
-                dataTableShow1.Rows[row][0] = ADorEXC;
-                dataTableShow1.Rows[row][1] = user1.nameGiven;
-                dataTableShow1.Rows[row][2] = user1.nameSurn;
-                dataTableShow1.Rows[row][3] = user1.nameFull;
-                dataTableShow1.Rows[row][4] = user1.nameAcco;
-                dataTableShow1.Rows[row][5] = user1.description;
-                dataTableShow1.Rows[row][6] = user1.office;
-                //dataTableShow1.Rows[row][0] =user1.leader;
-                dataTableShow1.Rows[row][7] = user1.tel;
-                dataTableShow1.Rows[row][8] = user1.mob;
-                dataTableShow1.Rows[row][9] = user1.cardNumber;
-                //dataTableShow1.Rows[row][0] =user1.cardHave;
-                dataTableShow1.Rows[row][10] = user1.password;
+                dataTableShow1.Rows[row]["-zdroj-"] = ADorEXC;
+                dataTableShow1.Rows[row]["Křestní"] = aduser1.nameGiven;
+                dataTableShow1.Rows[row]["Příjmení"] = aduser1.nameSurn;
+                dataTableShow1.Rows[row]["Plné jméno"] = aduser1.nameFull;
+                dataTableShow1.Rows[row]["Username"] = aduser1.nameAcco;
+                dataTableShow1.Rows[row]["Kancelář"] = aduser1.office;
+                dataTableShow1.Rows[row]["Středisko"] = aduser1.department;
+                dataTableShow1.Rows[row]["Tel"] = aduser1.tel;
+                dataTableShow1.Rows[row]["TelOstatní"] = aduser1.telOthers;
+                dataTableShow1.Rows[row]["Mob"] = aduser1.mob;
+                dataTableShow1.Rows[row]["Popis"] = aduser1.description;
+                dataTableShow1.Rows[row]["Pozice"] = aduser1.title;
+                dataTableShow1.Rows[row]["Karta"] = aduser1.cardNumber;
+                dataTableShow1.Rows[row]["Email"] = aduser1.emailAddress;
+                dataTableShow1.Rows[row]["Manager"] = aduser1.manager;
+                dataTableShow1.Rows[row]["Heslo"] = aduser1.password;
+                dataTableShow1.Rows[row]["Path"] = aduser1.path;
+                dataTableShow1.Rows[row]["ChangePasswordAtLogon"] = aduser1.ChangePasswordAtLogon;
+                dataTableShow1.Rows[row]["CannotChangePassword"] = aduser1.CannotChangePassword;
+                dataTableShow1.Rows[row]["PasswordNeverExpires"] = aduser1.PasswordNeverExpires;
+                dataTableShow1.Rows[row]["Enabled"] = aduser1.Enabled;
                 log("-vyplnění řádku v tabulce dokončeno");
-            } else
+            }
+            else
             {
                 log("Error. Nelze zapsat do řádku v tabulce z důvodu čísla řádky ");
             }
@@ -541,47 +682,96 @@ namespace PowerShell2_CreateADuserFromExcel
 
             dataGridView1.Refresh();
         }
-        
+
         private ADuser createUserFromRow(int row)
         {
-            ADuser user1 = new ADuser("");
-
-
+            ADuser aduser1 = new ADuser("");
 
             if (dataTableShow1.Rows.Count > row & dataGridView1.Rows[row].Cells[4].Value.ToString() != "")
             {
-                //todo vložit data do user
-                //dataTableShow1.Columns.Add("-zdroj-", typeof(string));
-                //dataTableShow1.Columns.Add("Křestní", typeof(string));
-                //dataTableShow1.Columns.Add("Příjmení", typeof(string));
-                //dataTableShow1.Columns.Add("Plné jméno", typeof(string));
-                //dataTableShow1.Columns.Add("Username", typeof(string));
-                //dataTableShow1.Columns.Add("Pozice", typeof(string));
-                //dataTableShow1.Columns.Add("Středisko", typeof(string));
-                //dataTableShow1.Columns.Add("Tel", typeof(string));
-                //dataTableShow1.Columns.Add("Mob", typeof(string));
-                //dataTableShow1.Columns.Add("Karta", typeof(string));
-                //dataTableShow1.Columns.Add("Heslo", typeof(string));
+                aduser1 = new ADuser();
 
-                string nameGiven= dataGridView1.Rows[row].Cells[1].Value.ToString();
-                string nameSurn= dataGridView1.Rows[row].Cells[2].Value.ToString();
-                string nameFull= dataGridView1.Rows[row].Cells[3].Value.ToString();
-                string nameAcco= dataGridView1.Rows[row].Cells[4].Value.ToString();
-                string office= dataGridView1.Rows[row].Cells[5].Value.ToString();
-                string description= dataGridView1.Rows[row].Cells[6].Value.ToString();
-                string tel= dataGridView1.Rows[row].Cells[7].Value.ToString();
-                string mob= dataGridView1.Rows[row].Cells[8].Value.ToString();
-                string cardNumber= dataGridView1.Rows[row].Cells[9].Value.ToString();
-                string password= dataGridView1.Rows[row].Cells[10].Value.ToString();
+                aduser1.nameGiven = dataGridView1.Rows[row].Cells[1].Value.ToString();
+                aduser1.nameSurn = dataGridView1.Rows[row].Cells[2].Value.ToString();
+                aduser1.nameFull = dataGridView1.Rows[row].Cells[3].Value.ToString();
+                aduser1.nameAcco = dataGridView1.Rows[row].Cells[4].Value.ToString();
+                aduser1.office = dataGridView1.Rows[row].Cells[5].Value.ToString();
+                aduser1.description = dataGridView1.Rows[row].Cells[6].Value.ToString();
+                aduser1.tel = dataGridView1.Rows[row].Cells[7].Value.ToString();
+                aduser1.mob = dataGridView1.Rows[row].Cells[8].Value.ToString();
+                aduser1.cardNumber = dataGridView1.Rows[row].Cells[9].Value.ToString();
+                aduser1.password = dataGridView1.Rows[row].Cells[10].Value.ToString();
 
-                user1 = new ADuser(nameGiven, nameSurn, nameFull, nameAcco, description, office, tel, mob, cardNumber, password);
+                aduser1.nameGiven = dataTableShow1.Rows[row]["Křestní"].ToString();
+                aduser1.nameSurn = dataTableShow1.Rows[row]["Příjmení"].ToString();
+                aduser1.nameFull = dataTableShow1.Rows[row]["Plné jméno"].ToString();
+                aduser1.nameAcco = dataTableShow1.Rows[row]["Username"].ToString();
+                aduser1.office = dataTableShow1.Rows[row]["Kancelář"].ToString();
+                aduser1.department = dataTableShow1.Rows[row]["Středisko"].ToString();
+                aduser1.tel = dataTableShow1.Rows[row]["Tel"].ToString();
+                aduser1.telOthers = dataTableShow1.Rows[row]["TelOstatní"].ToString();
+                aduser1.mob = dataTableShow1.Rows[row]["Mob"].ToString();
+                aduser1.description = dataTableShow1.Rows[row]["Popis"].ToString();
+                aduser1.title = dataTableShow1.Rows[row]["Pozice"].ToString();
+                aduser1.cardNumber = dataTableShow1.Rows[row]["Karta"].ToString();
+                aduser1.emailAddress = dataTableShow1.Rows[row]["Email"].ToString();
+                aduser1.manager = dataTableShow1.Rows[row]["Manager"].ToString();
+                aduser1.password = dataTableShow1.Rows[row]["Heslo"].ToString();
+                aduser1.path = dataTableShow1.Rows[row]["Path"].ToString();
+                try
+                {
+                    if (Convert.ToBoolean(dataTableShow1.Rows[row]["ChangePasswordAtLogon"]) == true)
+                    {
+                        aduser1.ChangePasswordAtLogon = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    aduser1.ChangePasswordAtLogon = false;
+                }
 
-            } else
+                try
+                {
+                    if (Convert.ToBoolean(dataTableShow1.Rows[row]["CannotChangePassword"]) == true)
+                    {
+                        aduser1.CannotChangePassword = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    aduser1.CannotChangePassword = false;
+                }
+
+                try
+                {
+                    if (Convert.ToBoolean(dataTableShow1.Rows[row]["PasswordNeverExpires"]) == true)
+                    {
+                        aduser1.PasswordNeverExpires = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    aduser1.PasswordNeverExpires = false;
+                }
+
+                try
+                {
+                    if (Convert.ToBoolean(dataTableShow1.Rows[row]["Enabled"]) == true)
+                    {
+                        aduser1.Enabled = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    aduser1.Enabled = false;
+                }
+            }
+            else
             {
                 MessageBox.Show("Error. Nebylo možné převést data z tabulky do ADuser formátu.");
                 log("Error. Nebylo možné převést data z tabulky do ADuser formátu.");
             }
-            return user1;
+            return aduser1;
         }
 
         private void CopyRow(DataGridView dataGV, int SourceRow, int DestinationRow)
@@ -590,6 +780,16 @@ namespace PowerShell2_CreateADuserFromExcel
                 dataGV.Rows[DestinationRow].Cells[i].Value = dataGV.Rows[SourceRow].Cells[i].Value;
         }
 
+        private void log(string message)
+        {
+            if (!label_Actual.Text.Contains("Error"))
+            {
+                label_Actual.Text = message;
+            }
+
+        }
+
+        #endregion
 
         /* ----- ( Excel ) ----- */
 
@@ -603,7 +803,7 @@ namespace PowerShell2_CreateADuserFromExcel
 
             if (textboxText == "" | textboxText == "...")
             {
-                filePath = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xls");
+                filePath = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
                 MessageBox.Show("Nebyla vyplněna cesta k souboru.", "Otázka", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
             }
             else
@@ -682,7 +882,8 @@ namespace PowerShell2_CreateADuserFromExcel
             {
                 log("Error. Nepodařilo se načíst excel");
                 MessageBox.Show("Nepodařilo se načíst excel (in ReadExcelFile). Info: " + connectionString.ToString(), "Error");
-            } else
+            }
+            else
             {
                 string sheetName = "List1$";
                 if (ds.Tables.Contains(sheetName))
@@ -691,29 +892,83 @@ namespace PowerShell2_CreateADuserFromExcel
                     int table1RowsNumber = table1.Rows.Count;
                     DataRow row = table1.Rows[rowNumber];
 
-                    string nameFirs = row["jmeno"].ToString();
-                    string nameSeco = row["prijmeni"].ToString();
-                    string nameFull = row["celeJmeno"].ToString();
-                    string nameUser = row["uzivatel"].ToString();
-                    string office = row["kmen_str"].ToString();
-                    string password = row["heslo"].ToString();
+                    string nameGiven = "";
+                    string nameSurn = "";
+                    string password = "";
+                    string emailAddress = "";
+                    string office = "";
+                    string department = "";
+                    string tel = "";
+                    string mob = "";
+                    string description = "";
+                    string title = "";
+                    string telOthers = "";
+                    string cardNumber = "";
+                    string manager = "";
+                    string path = "";
+                    bool ChangePasswordAtLogon = false;
+                    bool CannotChangePassword = false;
+                    bool PasswordNeverExpires = false;
+                    bool Enabled = false;
 
-                    ADuser user1 = new ADuser(nameUser);
-                    user1.nameGiven = nameFirs;
-                    user1.nameSurn = nameSeco;
+
+                    //načte informace (v řádce řádku) podle názvu sloupce
+                    string nameAcco = row["login"].ToString();
+                    string nameFull = row["jméno"].ToString();
+                    try { nameGiven = row["křestní"].ToString(); } catch { }
+                    try { nameSurn = row["příjmení"].ToString(); } catch { }
+                    try { password = row["heslo"].ToString(); } catch { }
+                    try { emailAddress = row["email"].ToString(); } catch { }
+                    try { office = row["kancelář"].ToString(); } catch { }
+                    try { department = row["středisko"].ToString(); } catch { }
+                    try { title = row["title"].ToString(); } catch { }
+                    try { description = row["description"].ToString(); } catch { }
+                    try { tel = row["tel"].ToString(); } catch { }
+                    try { mob = row["mob"].ToString(); } catch { }
+                    try { telOthers = row["otherTelephone"].ToString(); } catch { }
+                    try { cardNumber = row["karta"].ToString(); } catch { }
+                    try { manager = row["manager"].ToString(); } catch { }
+                    try { path = row["path"].ToString(); } catch { }
+                    try { ChangePasswordAtLogon = Convert.ToBoolean(row["ChangePasswordAtLogon"].ToString()); } catch { }
+                    try { CannotChangePassword = Convert.ToBoolean(row["CannotChangePassword"].ToString()); } catch { }
+                    try { PasswordNeverExpires = Convert.ToBoolean(row["PasswordNeverExpires"].ToString()); } catch { }
+                    try { Enabled = Convert.ToBoolean(row["Enabled"].ToString()); } catch { }
+
+
+                    //vytvoří ADuser z daných informací
+                    ADuser user1 = new ADuser(nameAcco);
+                    user1.nameGiven = nameGiven;
+                    user1.nameSurn = nameSurn;
                     user1.nameFull = nameFull;
-                    user1.office = office;
+                    //user1.nameAcco = nameAcco;
                     user1.password = password;
+                    user1.emailAddress = emailAddress;
+                    user1.office = office;
+                    user1.department = department;
+                    user1.tel = tel;
+                    user1.mob = mob;
+                    user1.description = description;
+                    user1.title = title;
+                    user1.telOthers = telOthers;
+                    user1.cardNumber = cardNumber;
+                    user1.manager = manager;
+                    user1.path = path;
+                    user1.ChangePasswordAtLogon = ChangePasswordAtLogon;
+                    user1.CannotChangePassword = CannotChangePassword;
+                    user1.PasswordNeverExpires = PasswordNeverExpires;
+                    user1.Enabled = Enabled;
 
+
+                    //vypíše informace do řádky
                     dataTableWriteUser(0, "EXC", user1);
                 }
                 else
                 {
                     log("Error. Nepodařilo se najít záložku. " + sheetName);
                 }
-                         
-                
-                
+
+
+
             }
         }
 
@@ -721,8 +976,9 @@ namespace PowerShell2_CreateADuserFromExcel
 
         private void bTest_Click(object sender, EventArgs e)
         {
-            
-            log("$koment = " + @"""" + (DateTime.Now.ToString("yyyy/MM/dd") + "_created_by_script1") + @"""");
+            log(PS_SearchUser_Identity("ftester"));
+
+            //log("$koment = " + @"""" + (DateTime.Now.ToString("yyyy/MM/dd") + "_created_by_script1") + @"""");
 
             //log("" + DateTime.Now.ToString("h:mm:ss tt"));
             /*dataGridView1.Focus();
@@ -769,11 +1025,11 @@ namespace PowerShell2_CreateADuserFromExcel
             label_Actual.Text = "...";
             setDataGridView();
             //vyhledani uživatele podle userName v první řádce tabulky
-            ADuser userNew = new ADuser(dataGridView1.Rows[0].Cells[4].Value.ToString());
+            ADuser userNew = new ADuser(dataTableShow1.Rows[0]["Username"].ToString());
             ADuser userAD = PS_SearchUser_UserName(userNew);
             if (userAD.nameAcco != "")
             {
-                dataTableWriteUser(1,"AD", userAD);
+                dataTableWriteUser(1, "AD", userAD);
             }
         }
 
@@ -824,8 +1080,18 @@ namespace PowerShell2_CreateADuserFromExcel
 
                 CopyRow(dataGridView1, 1, 0);
 
+                //oprava path
+                string text = dataTableShow1.Rows[0]["Path"].ToString();
+                int charLocation = text.IndexOf(",")+1;
+                int maxLenght = text.Length;
+                if (charLocation > 0)
+                {
+                    string textFinal = text.Substring(charLocation, maxLenght - charLocation);
+                    dataTableShow1.Rows[0]["Path"] = textFinal;
+                }
 
-            } catch
+            }
+            catch
             {
                 MessageBox.Show("Error. Nepodařilo se zkopírovat řádky!");
             }
@@ -849,11 +1115,12 @@ namespace PowerShell2_CreateADuserFromExcel
                 {
                     //přepsání uživatele
 
-                    dataTableWriteUser(1,"AD", existUser);
+                    dataTableWriteUser(1, "AD", existUser);
                     log("Uživatel existuje. Pozor není doděláno přepsání uživatele!!");
                     //MessageBox.Show("Error. Není doděláno přepsání uživatele!");
 
-                } else
+                }
+                else
                 {
                     //založení uživatele
                     //TODO: delete data from row 1
@@ -861,7 +1128,8 @@ namespace PowerShell2_CreateADuserFromExcel
                     PS_CreateNewUser(newUser);
                 }
 
-            } else
+            }
+            else
             {
                 MessageBox.Show("Error. Nový užival nemůže mít prázdné jméno!");
                 log("Error. Nový užival nemůže mít prázdné jméno!");
@@ -878,7 +1146,7 @@ namespace PowerShell2_CreateADuserFromExcel
             try
             {
                 excelRow = Convert.ToInt32(ts_TextBox1.Text);
-                ts_TextBox1.Text = "" + (excelRow +1);
+                ts_TextBox1.Text = "" + (excelRow + 1);
             }
             catch
             {
@@ -934,7 +1202,217 @@ namespace PowerShell2_CreateADuserFromExcel
         private void TS_getPath_Click(object sender, EventArgs e)
         {
             //vyplní cestu (z horního menu) aktuální pozicí souboru
-            ts_TextBox2.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "data.xls");
+            ts_TextBox2.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
+        }
+
+        private void TS_MenuItem_moveUser_Click(object sender, EventArgs e)
+        {
+            log("Spuštěn: " + sender);
+            label_Actual.Text = "...";
+            //setDataGridView();
+            //dataGridView1.Refresh();
+            string nameNewUser = dataTableShow1.Rows[0]["Username"].ToString();
+            //string nameNewUser = dataGridView1.Rows[0].Cells[4].Value.ToString();
+            ADuser existUser = PS_SearchUser_UserName(new ADuser(nameNewUser));
+            string nameExistUser = existUser.nameAcco;
+
+            label_Actual.Text = "..."; //smazani erroru o nenalezeni uživatele. (kontrola přepsání)
+
+            if (nameNewUser != "")
+            {
+                if (nameExistUser == nameNewUser)
+                {
+                    //move user
+                    ADuser newUser = createUserFromRow(0);
+                    PS_MoveUser(newUser, ts_TextBox3.Text);
+                }
+
+            }
+            else
+            {
+                MessageBox.Show("Error. Přesunovaný uživatel nemůže mít prázdné jméno!");
+                log("Error. Přesunovaný uživatel nemůže mít prázdné jméno!");
+            }
+        }
+
+        private void TS_createTestUser_Click(object sender, EventArgs e)
+        {
+            ADuser user1 = new ADuser();
+            user1.nameGiven = "test";
+            user1.nameSurn = "User 10";
+            user1.nameFull = "test User 10";
+            user1.nameAcco = "testUser10";
+            user1.password = "1a2z3A4Z5b";
+            user1.emailAddress = "testEmail10.cz";
+            user1.office = "10000";
+            user1.department = "10011";
+            user1.tel = "000";
+            user1.mob = "000 000 000";
+            user1.description = "testovací účet";
+            user1.title = "Pozice záložní Tester";
+            user1.telOthers = "000;001;002";
+            user1.cardNumber = "001";
+            user1.manager = "ftester";
+            user1.ChangePasswordAtLogon = false;
+            user1.CannotChangePassword = true;
+            user1.PasswordNeverExpires = true;
+            user1.Enabled = true;
+            user1.path = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
+
+            PS_CreateNewUser(user1);
+        }
+
+        private void dataGridView1_CellEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            //metoda na doplňování kolonek v tabulce podle vyplněných údajů
+            int row1 = e.RowIndex;
+            int collum1 = e.ColumnIndex;
+
+            //automatické doplnění full jména
+            if (row1 == 0 & collum1 == dataTableShow1.Columns.IndexOf("Plné jméno"))
+            {
+
+                if (dataTableShow1.Rows[row1][collum1].ToString() == "")
+                {
+                    string first = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Křestní")].ToString();
+                    string second = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Příjmení")].ToString();
+                    if (first != "" & second != "")
+                    {
+                        dataTableShow1.Rows[row1][collum1] = second + " " + first;
+                    }
+
+                }
+            }
+
+            //automatické doplnění křestní a příjmení (z full jména)
+            if (row1 == 0 & collum1 == dataTableShow1.Columns.IndexOf("Plné jméno"))
+            {
+                if (dataTableShow1.Rows[row1][collum1].ToString() != "")
+                {
+                    string fullName = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Plné jméno")].ToString();
+                    string[] stringSeparators = new string[] { " " };
+                    //rozdělí vstupní jméno
+                    string[] result = fullName.Split(stringSeparators, StringSplitOptions.None);
+                    //zkontroluje podmínky a přiřadí
+                    if (result.Length >= 2)
+                    {
+                        string firstNameOld = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Křestní")].ToString();
+                        string secondNameOld = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Příjmení")].ToString();
+
+                        string firstName = result[1];
+                        string secondName = result[0];
+
+                        if (firstNameOld == "")
+                        {
+                            dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Křestní")] = firstName;
+                        }
+                        if (secondNameOld == "")
+                        {
+                            dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Příjmení")] = secondName;
+                        }
+                    }
+                }
+            }
+
+            //automatické doplnění Username
+            if (row1 == 0 & collum1 == dataTableShow1.Columns.IndexOf("Username"))
+            {
+
+                if (dataTableShow1.Rows[row1][collum1].ToString() == "")
+                {
+                    string first = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Křestní")].ToString();
+                    string second = dataTableShow1.Rows[row1][dataTableShow1.Columns.IndexOf("Příjmení")].ToString();
+
+                    first = RemoveDiacritics(first);
+                    second = RemoveDiacritics(second);
+
+                    if (first != "" & second != "")
+                    {
+                        dataTableShow1.Rows[row1][collum1] = first.ToLower()[0] + second.ToLower();
+                    }
+
+                }
+            }
+
+
+        }
+
+        public static string RemoveDiacritics(string s)
+        {
+            s = s.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(s[i]) != UnicodeCategory.NonSpacingMark) sb.Append(s[i]);
+            }
+
+            return sb.ToString();
+        }
+
+        private void ts_TextBox3_MouseDown(object sender, MouseEventArgs e)
+        {
+            //vytvoří menu na vložení přednastavených věcí
+
+            if (e.Button == MouseButtons.Right)
+            {
+                //contextMenuStrip1.(Cursor.Position.X, Cursor.Position.Y);
+                TS_userSetting.ShowDropDown();
+                contextMenuStrip1.Show(Cursor.Position.X - 150, Cursor.Position.Y);
+
+                //ContextMenuStrip contexMenuuu = new ContextMenuStrip();
+                //contexMenuuu.Items.Add("Edit ");
+                //contexMenuuu.Items.Add("Delete ");
+                //contexMenuuu.Show();
+                //contexMenuuu.ItemClicked += new ToolStripItemClickedEventHandler(
+                //    userContainerToolStripMenuItem_Click);
+            }
+        }
+
+        private void userContainerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ts_TextBox3.Text = "OU=Users,OU=People,OU=Company,DC=sitel,DC=cz";
+            TS_userSetting.ShowDropDown();
+        }
+
+        private void testContainerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ts_TextBox3.Text = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
+            TS_userSetting.ShowDropDown();
+        }
+
+        private void clearToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ts_TextBox3.Text = "";
+            TS_userSetting.ShowDropDown();
+        }
+
+
+    }
+}
+
+
+namespace ExtensionMethods
+{
+    public static class StringExtensions
+    {
+        public static string addQuotes(this String input)
+        {
+            return @"""" + input + @"""";
+        }
+
+        public static string addQuotes(this Boolean input)
+        {
+            string final = "";
+            if (input)
+            {
+                final = "$true";
+            }
+            else
+            {
+                final = "$false";
+            }
+            return final;
         }
     }
 }
