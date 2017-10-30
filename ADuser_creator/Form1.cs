@@ -15,28 +15,29 @@ using System.Data.OleDb;
 using ExtensionMethods;
 using System.Globalization;
 
-namespace PowerShell2_CreateADuserFromExcel
+namespace ADuser_creator
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.36";
+        public string verze = "0.00.37";
         public string filePath;
         public Form1()
         {
             InitializeComponent();
             dataTableInicial();
-            this.Text = "PowerShell - AD User Creator V" + verze;
+            this.Text = "ADuser Creator V" + verze;
         }
 
+        #region info
         //TODO: 
-        //user canot sort lines (but can :/ ).
-        //create Compare User
-        //better test table
-        //add log (uložení do texťáku), vypsat celý powershellový skript, první řádka datum a čas, dále odrážka kvůli čitelnosti.
-        //opravit bugy -> funkci (ctrl+C,ctrl+V), 
-        //
+        //user can sort lines (but can :/ ).
+        //create method for Compare User
+        //add log (in text file), show powershell script, first line date and time.
+        //bug: ctrl+C,ctrl+V 
+        //re-design. table horizontally (also ctrl+C and Ctrl+V)
+        //code cleanup test things 2/2, + methot sort
 
-        /*Info o verzi
+        /*Version info
          0.00.01 - Basic design idea
          0.00.05 - method for create new AD user
          0.00.23 - more parameters in ADuser class
@@ -47,11 +48,14 @@ namespace PowerShell2_CreateADuserFromExcel
          0.00.29 - more ADuser parameters (otherTelephone, EmailAddress, manager)
          0.00.30 - better PS script for write user
          0.00.31 - bug fixed, additional parameters to load from excel
-         0.00.32 - automatické doplňování tabulky
-         0.00.32 - bugfix: kopírovat do horního řádku v kolonce path pouze cestu. odstranění začáteku textu 
+         0.00.32 - automatic replenishment of the table
+         0.00.33 - bugfix: kopírovat do horního řádku v kolonce path pouze cestu. odstranění začáteku textu 
          0.00.34 - added right click menu for container move
          0.00.35 - remove diacritic from username (in autocomplete), added split from full name to first and second cell.
+         0.00.36 - added icons
+         0.00.37 - project rename. "PowerShell2_CreateADuserFromExcel" -> "ADuser_creator"
          */
+        #endregion info
 
         /* ----- test things ----- */
 
@@ -137,7 +141,6 @@ namespace PowerShell2_CreateADuserFromExcel
                 );
         }
 
-        #region PowerShell
         /* ----- (powershell script) ----- */
 
         private string PS_SearchUser_Identity(string nameSamAccount)
@@ -585,10 +588,7 @@ namespace PowerShell2_CreateADuserFromExcel
             }
         }*/
 
-        #endregion
-
-        #region Ostatní
-        /* ----- ( ostatní) ----- */
+        /* ----- ( other) ----- */
 
         DataTable dataTableShow1;
 
@@ -789,8 +789,6 @@ namespace PowerShell2_CreateADuserFromExcel
 
         }
 
-        #endregion
-
         /* ----- ( Excel ) ----- */
 
         private string GetConnectionString()
@@ -972,7 +970,7 @@ namespace PowerShell2_CreateADuserFromExcel
             }
         }
 
-        /* ----- ( buttons ) ----- */
+        /* ----- ( Buttons ) ----- */
 
         private void bTest_Click(object sender, EventArgs e)
         {
@@ -1386,7 +1384,6 @@ namespace PowerShell2_CreateADuserFromExcel
             ts_TextBox3.Text = "";
             TS_userSetting.ShowDropDown();
         }
-
 
     }
 }

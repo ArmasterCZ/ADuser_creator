@@ -1,0 +1,17 @@
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\ADuser_Creator.csprojResolveAssemblyReference.cache
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.Form1.resources
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.Properties.Resources.resources
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\ADuser_Creator.csproj.GenerateResource.Cache
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.exe
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\PowerShell2_CreateADuserFromExcel\PowerShell2_CreateADuserFromExcel\obj\Debug\PowerShell2_CreateADuserFromExcel.pdb
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_Creator.csprojResolveAssemblyReference.cache
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_Creator.csproj.GenerateResource.Cache
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.Form1.resources
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\bin\Debug\ADuser_creator.exe.config
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\bin\Debug\Service References\System.Management.Automation.dll
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\bin\Debug\ADuser_creator.exe
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\bin\Debug\ADuser_creator.pdb
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\bin\Debug\System.Management.Automation.dll
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.Properties.Resources.resources
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.exe
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.pdb

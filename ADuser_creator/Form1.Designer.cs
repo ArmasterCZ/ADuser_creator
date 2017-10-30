@@ -1,4 +1,4 @@
-﻿namespace PowerShell2_CreateADuserFromExcel
+﻿namespace ADuser_creator
 {
     partial class Form1
     {
