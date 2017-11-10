@@ -44,14 +44,23 @@
             this.ts_excel = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_MenuItem_loadExcel = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_TextBox1 = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.ts_getPath = new System.Windows.Forms.ToolStripMenuItem();
-            this.ts_TextBox2 = new System.Windows.Forms.ToolStripTextBox();
-            this.ts_test = new System.Windows.Forms.ToolStripMenuItem();
-            this.ts_test1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.ts_createTestUser = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_ExTextBoxPath = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.ts_getPathAC = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_ExTextBoxPathAC = new System.Windows.Forms.ToolStripTextBox();
             this.ts_userSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_MenuItem_moveUser = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_TextBoxPath = new System.Windows.Forms.ToolStripTextBox();
+            this.ts_test = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_test1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.nic1ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.nic2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripComboBox1 = new System.Windows.Forms.ToolStripComboBox();
+            this.ts_createTestUser = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataSet1)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -60,7 +69,7 @@
             // b_Write
             // 
             this.b_Write.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.b_Write.Location = new System.Drawing.Point(500, 562);
+            this.b_Write.Location = new System.Drawing.Point(430, 542);
             this.b_Write.Name = "b_Write";
             this.b_Write.Size = new System.Drawing.Size(75, 23);
             this.b_Write.TabIndex = 0;
@@ -78,7 +87,7 @@
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(12, 27);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(563, 529);
+            this.dataGridView1.Size = new System.Drawing.Size(493, 509);
             this.dataGridView1.TabIndex = 2;
             this.dataGridView1.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellEnter);
             this.dataGridView1.KeyUp += new System.Windows.Forms.KeyEventHandler(this.dataGridView1_KeyUp);
@@ -107,7 +116,7 @@
             // 
             this.label_Actual.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label_Actual.AutoSize = true;
-            this.label_Actual.Location = new System.Drawing.Point(12, 567);
+            this.label_Actual.Location = new System.Drawing.Point(12, 547);
             this.label_Actual.Name = "label_Actual";
             this.label_Actual.Size = new System.Drawing.Size(16, 13);
             this.label_Actual.TabIndex = 4;
@@ -116,7 +125,7 @@
             // b_Search
             // 
             this.b_Search.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.b_Search.Location = new System.Drawing.Point(419, 562);
+            this.b_Search.Location = new System.Drawing.Point(349, 542);
             this.b_Search.Name = "b_Search";
             this.b_Search.Size = new System.Drawing.Size(75, 23);
             this.b_Search.TabIndex = 0;
@@ -127,7 +136,7 @@
             // b_Delete
             // 
             this.b_Delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.b_Delete.Location = new System.Drawing.Point(338, 562);
+            this.b_Delete.Location = new System.Drawing.Point(268, 542);
             this.b_Delete.Name = "b_Delete";
             this.b_Delete.Size = new System.Drawing.Size(75, 23);
             this.b_Delete.TabIndex = 0;
@@ -138,7 +147,7 @@
             // b_Clone
             // 
             this.b_Clone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.b_Clone.Location = new System.Drawing.Point(257, 562);
+            this.b_Clone.Location = new System.Drawing.Point(187, 542);
             this.b_Clone.Name = "b_Clone";
             this.b_Clone.Size = new System.Drawing.Size(75, 23);
             this.b_Clone.TabIndex = 0;
@@ -151,11 +160,11 @@
             this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ts_excel,
-            this.ts_test,
-            this.ts_userSetting});
+            this.ts_userSetting,
+            this.ts_test});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(587, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(517, 24);
             this.menuStrip1.TabIndex = 5;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -164,8 +173,12 @@
             this.ts_excel.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ts_MenuItem_loadExcel,
             this.ts_TextBox1,
+            this.toolStripSeparator2,
             this.ts_getPath,
-            this.ts_TextBox2});
+            this.ts_ExTextBoxPath,
+            this.toolStripSeparator3,
+            this.ts_getPathAC,
+            this.ts_ExTextBoxPathAC});
             this.ts_excel.Name = "ts_excel";
             this.ts_excel.Size = new System.Drawing.Size(45, 20);
             this.ts_excel.Text = "Excel";
@@ -173,7 +186,7 @@
             // ts_MenuItem_loadExcel
             // 
             this.ts_MenuItem_loadExcel.Name = "ts_MenuItem_loadExcel";
-            this.ts_MenuItem_loadExcel.Size = new System.Drawing.Size(160, 22);
+            this.ts_MenuItem_loadExcel.Size = new System.Drawing.Size(223, 22);
             this.ts_MenuItem_loadExcel.Text = "Load Excel line:";
             this.ts_MenuItem_loadExcel.Click += new System.EventHandler(this.ts_loadExcel_Click);
             // 
@@ -183,42 +196,42 @@
             this.ts_TextBox1.Size = new System.Drawing.Size(100, 23);
             this.ts_TextBox1.Text = "1";
             // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(220, 6);
+            // 
             // ts_getPath
             // 
             this.ts_getPath.Name = "ts_getPath";
-            this.ts_getPath.Size = new System.Drawing.Size(160, 22);
-            this.ts_getPath.Text = "Get current path";
+            this.ts_getPath.Size = new System.Drawing.Size(223, 22);
+            this.ts_getPath.Text = "Current path for load";
             this.ts_getPath.Click += new System.EventHandler(this.ts_getPath_Click);
             // 
-            // ts_TextBox2
+            // ts_ExTextBoxPath
             // 
-            this.ts_TextBox2.AcceptsReturn = true;
-            this.ts_TextBox2.Name = "ts_TextBox2";
-            this.ts_TextBox2.Size = new System.Drawing.Size(100, 23);
-            this.ts_TextBox2.Text = "D:/info.xls";
+            this.ts_ExTextBoxPath.AcceptsReturn = true;
+            this.ts_ExTextBoxPath.Name = "ts_ExTextBoxPath";
+            this.ts_ExTextBoxPath.Size = new System.Drawing.Size(100, 23);
+            this.ts_ExTextBoxPath.Text = "D:/info.xlsx";
             // 
-            // ts_test
+            // toolStripSeparator3
             // 
-            this.ts_test.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.ts_test1,
-            this.ts_createTestUser});
-            this.ts_test.Name = "ts_test";
-            this.ts_test.Size = new System.Drawing.Size(41, 20);
-            this.ts_test.Text = "Test";
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(220, 6);
             // 
-            // ts_test1
+            // ts_getPathAC
             // 
-            this.ts_test1.Name = "ts_test1";
-            this.ts_test1.Size = new System.Drawing.Size(158, 22);
-            this.ts_test1.Text = "test (nic nedělá)";
-            this.ts_test1.Click += new System.EventHandler(this.ts_Test_Click);
+            this.ts_getPathAC.Name = "ts_getPathAC";
+            this.ts_getPathAC.Size = new System.Drawing.Size(223, 22);
+            this.ts_getPathAC.Text = "Current path for completion";
+            this.ts_getPathAC.Click += new System.EventHandler(this.ts_getPathAC_Click);
             // 
-            // ts_createTestUser
+            // ts_ExTextBoxPathAC
             // 
-            this.ts_createTestUser.Name = "ts_createTestUser";
-            this.ts_createTestUser.Size = new System.Drawing.Size(158, 22);
-            this.ts_createTestUser.Text = "create test user";
-            this.ts_createTestUser.Click += new System.EventHandler(this.ts_createTestUser_Click);
+            this.ts_ExTextBoxPathAC.Name = "ts_ExTextBoxPathAC";
+            this.ts_ExTextBoxPathAC.Size = new System.Drawing.Size(100, 23);
+            this.ts_ExTextBoxPathAC.Text = "D:/Office.xlsx";
             // 
             // ts_userSetting
             // 
@@ -238,16 +251,83 @@
             // 
             // ts_TextBoxPath
             // 
+            this.ts_TextBoxPath.AcceptsReturn = true;
             this.ts_TextBoxPath.Name = "ts_TextBoxPath";
             this.ts_TextBoxPath.Size = new System.Drawing.Size(300, 23);
             this.ts_TextBoxPath.Text = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
             this.ts_TextBoxPath.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ts_TextBoxPath_MouseDown);
             // 
+            // ts_test
+            // 
+            this.ts_test.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ts_test1,
+            this.ts_createTestUser});
+            this.ts_test.Name = "ts_test";
+            this.ts_test.Size = new System.Drawing.Size(41, 20);
+            this.ts_test.Text = "Test";
+            // 
+            // ts_test1
+            // 
+            this.ts_test1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.nic1ToolStripMenuItem,
+            this.toolStripTextBox1,
+            this.toolStripSeparator1,
+            this.nic2ToolStripMenuItem,
+            this.toolStripComboBox1});
+            this.ts_test1.Name = "ts_test1";
+            this.ts_test1.Size = new System.Drawing.Size(158, 22);
+            this.ts_test1.Text = "test (nic nedělá)";
+            this.ts_test1.Click += new System.EventHandler(this.ts_Test_Click);
+            // 
+            // nic1ToolStripMenuItem
+            // 
+            this.nic1ToolStripMenuItem.Name = "nic1ToolStripMenuItem";
+            this.nic1ToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.nic1ToolStripMenuItem.Text = "nic1";
+            // 
+            // toolStripTextBox1
+            // 
+            this.toolStripTextBox1.Name = "toolStripTextBox1";
+            this.toolStripTextBox1.Size = new System.Drawing.Size(100, 23);
+            this.toolStripTextBox1.Text = "Bla Bla";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(178, 6);
+            // 
+            // nic2ToolStripMenuItem
+            // 
+            this.nic2ToolStripMenuItem.Name = "nic2ToolStripMenuItem";
+            this.nic2ToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.nic2ToolStripMenuItem.Text = "nic2";
+            // 
+            // toolStripComboBox1
+            // 
+            this.toolStripComboBox1.Items.AddRange(new object[] {
+            "Test1",
+            "Test2",
+            "Test3",
+            "TTtt",
+            "TT-",
+            "AA+",
+            "aa-",
+            "aaa1"});
+            this.toolStripComboBox1.Name = "toolStripComboBox1";
+            this.toolStripComboBox1.Size = new System.Drawing.Size(121, 23);
+            // 
+            // ts_createTestUser
+            // 
+            this.ts_createTestUser.Name = "ts_createTestUser";
+            this.ts_createTestUser.Size = new System.Drawing.Size(158, 22);
+            this.ts_createTestUser.Text = "create test user";
+            this.ts_createTestUser.Click += new System.EventHandler(this.ts_createTestUser_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(587, 597);
+            this.ClientSize = new System.Drawing.Size(517, 577);
             this.Controls.Add(this.label_Actual);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.b_Clone);
@@ -288,11 +368,20 @@
         private System.Windows.Forms.ToolStripMenuItem ts_test;
         private System.Windows.Forms.ToolStripMenuItem ts_test1;
         private System.Windows.Forms.ToolStripMenuItem ts_getPath;
-        private System.Windows.Forms.ToolStripTextBox ts_TextBox2;
+        private System.Windows.Forms.ToolStripTextBox ts_ExTextBoxPath;
         private System.Windows.Forms.ToolStripMenuItem ts_userSetting;
         private System.Windows.Forms.ToolStripMenuItem ts_MenuItem_moveUser;
         private System.Windows.Forms.ToolStripTextBox ts_TextBoxPath;
         private System.Windows.Forms.ToolStripMenuItem ts_createTestUser;
+        private System.Windows.Forms.ToolStripMenuItem nic1ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem nic2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripComboBox toolStripComboBox1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripTextBox ts_ExTextBoxPathAC;
+        private System.Windows.Forms.ToolStripMenuItem ts_getPathAC;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
     }
 }
 

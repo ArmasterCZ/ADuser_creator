@@ -19,8 +19,7 @@ namespace ADuser_creator
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.40";
-        public string filePath;
+        public string verze = "0.00.43";
         public Form1()
         {
             InitializeComponent();
@@ -28,16 +27,21 @@ namespace ADuser_creator
             dataGridView1_ResetTable();
             //show actual version
             this.Text = "ADuser Creator V" + verze;
-
-            //this.ts_TextBoxPath.Control.ContextMenu = new ContextMenu();
+            //path for automatic load
+            ts_ExTextBoxPath.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
+            //path for automatic completion
+            ts_ExTextBoxPathAC.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "Office.xlsx");
         }
 
-        #region info
+
         //TODO: 
-        //create method for Compare User
-        //add log (in text file), show powershell script, first line date and time.
-        //code cleanup test things 2/2, + methot sort
-        //bug: ctrl+v (get nuber of row from datagridrow. vhen sort happend)
+        //create method for Compare User (and PS script to change only diferent item)
+        //feature: add log (in text file)
+        //feature: show powershell script, first line date and time.
+        //bug: ctrl+v (get nuber of row from datagridrow. Bad when sort happend)
+        //bug: check sort (add id column ? = for reorder back without data delete?)
+        //bug: for automatic completion is enought part of string (wrong?)
+        //better way of store excel paths "ts_ExTextBoxPath" & "ts_ExTextBoxPathAC" (right click menu with file names?)
 
         /*Version info
          0.00.01 - Basic design idea
@@ -51,7 +55,7 @@ namespace ADuser_creator
          0.00.30 - better PS script for write user
          0.00.31 - bug fixed, additional parameters to load from excel
          0.00.32 - automatic replenishment of the table
-         0.00.33 - bugfix: kopírovat do horního řádku v kolonce path pouze cestu. odstranění začáteku textu 
+         0.00.33 - bugfix: copy to cell path only container names. delete name of profile. 
          0.00.34 - added right click menu for container move
          0.00.35 - remove diacritic from username (in autocomplete), added split from full name to first and second cell.
          0.00.36 - added icons
@@ -59,10 +63,12 @@ namespace ADuser_creator
          0.00.38 - redesign 10% (form)
          0.00.39 - redesign 80% (functions) add clear for column if user was not found
          0.00.40 - redesign 100%(excel and ctrl+V)
+         0.00.41 - excel class
+         0.00.42 - group integration (ADuser [ADgroup], PS script [PS_GetUserGroups, PS_AddUserToGroups],table, + copy functions)
+         0.00.43 - excel class redesign, add automatic completion for department,description,title,manager,group (from office), added cloneToTable method
          */
-        #endregion info
 
-        /* ----- test things ----- */
+        #region junkFromDesign_0.00.37
 
         /*private void PS_EditExistUser(ADuser user1)
         {
@@ -474,10 +480,193 @@ namespace ADuser_creator
             return sb.ToString();
         }*/
 
+        /*private void excel_ReadFile(int rowNumber)
+        {
+            //load line from excel file
+
+            DataSet ds = new DataSet();
+            string connectionString = excel_GetConnectionString();
+            using (OleDbConnection conn = new OleDbConnection(connectionString))
+            {
+                conn.Open();
+                OleDbCommand cmd = new OleDbCommand();
+                cmd.Connection = conn;
+
+                // Get all Sheets in Excel File
+                DataTable dtSheet = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+
+                // Loop through all Sheets to get data
+                foreach (DataRow dr in dtSheet.Rows)
+                {
+                    string sheetName = dr["TABLE_NAME"].ToString();
+
+                    if (!sheetName.EndsWith("$"))
+                        continue;
+
+                    // Get all rows from the Sheet
+                    cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
+
+                    DataTable dt = new DataTable();
+                    dt.TableName = sheetName;
+
+                    OleDbDataAdapter da = new OleDbDataAdapter(cmd);
+                    da.Fill(dt);
+
+                    ds.Tables.Add(dt);
+                }
+
+                cmd = null;
+                conn.Close();
+            }
+
+            //check if load work
+            if (ds.Tables.Count == 0)
+            {
+                log("Error. Nepodařilo se načíst excel");
+                MessageBox.Show("Nepodařilo se načíst excel (in ReadExcelFile). Info: " + connectionString.ToString(), "Error");
+            }
+            else
+            {
+                string sheetName = "List1$";
+                if (ds.Tables.Contains(sheetName))
+                {
+                    DataTable table1 = ds.Tables[sheetName];
+                    int table1RowsNumber = table1.Rows.Count;
+                    DataRow row = table1.Rows[rowNumber];
+
+                    string nameGiven = "";
+                    string nameSurn = "";
+                    string password = "";
+                    string emailAddress = "";
+                    string office = "";
+                    string department = "";
+                    string tel = "";
+                    string mob = "";
+                    string description = "";
+                    string title = "";
+                    string telOthers = "";
+                    string cardNumber = "";
+                    string manager = "";
+                    string path = "";
+                    bool ChangePasswordAtLogon = false;
+                    bool CannotChangePassword = false;
+                    bool PasswordNeverExpires = false;
+                    bool Enabled = false;
+
+                    //load data (in rowNumber) by name of column
+                    string nameAcco = row["login"].ToString();
+                    string nameFull = row["jméno"].ToString();
+                    try { nameGiven = row["křestní"].ToString(); } catch { }
+                    try { nameSurn = row["příjmení"].ToString(); } catch { }
+                    try { password = row["heslo"].ToString(); } catch { }
+                    try { emailAddress = row["email"].ToString(); } catch { }
+                    try { office = row["kancelář"].ToString(); } catch { }
+                    try { department = row["středisko"].ToString(); } catch { }
+                    try { title = row["title"].ToString(); } catch { }
+                    try { description = row["description"].ToString(); } catch { }
+                    try { tel = row["tel"].ToString(); } catch { }
+                    try { mob = row["mob"].ToString(); } catch { }
+                    try { telOthers = row["otherTelephone"].ToString(); } catch { }
+                    try { cardNumber = row["karta"].ToString(); } catch { }
+                    try { manager = row["manager"].ToString(); } catch { }
+                    try { path = row["path"].ToString(); } catch { }
+                    try { ChangePasswordAtLogon = Convert.ToBoolean(row["ChangePasswordAtLogon"].ToString()); } catch { }
+                    try { CannotChangePassword = Convert.ToBoolean(row["CannotChangePassword"].ToString()); } catch { }
+                    try { PasswordNeverExpires = Convert.ToBoolean(row["PasswordNeverExpires"].ToString()); } catch { }
+                    try { Enabled = Convert.ToBoolean(row["Enabled"].ToString()); } catch { }
+
+
+                    //create instance of ADuser
+                    ADuser user1 = new ADuser(nameAcco);
+                    user1.nameGiven = nameGiven;
+                    user1.nameSurn = nameSurn;
+                    user1.nameFull = nameFull;
+                    //user1.nameAcco = nameAcco;
+                    user1.password = password;
+                    user1.emailAddress = emailAddress;
+                    user1.office = office;
+                    user1.department = department;
+                    user1.tel = tel;
+                    user1.mob = mob;
+                    user1.description = description;
+                    user1.title = title;
+                    user1.telOthers = telOthers;
+                    user1.cardNumber = cardNumber;
+                    user1.manager = manager;
+                    user1.path = path;
+                    user1.ChangePasswordAtLogon = ChangePasswordAtLogon;
+                    user1.CannotChangePassword = CannotChangePassword;
+                    user1.PasswordNeverExpires = PasswordNeverExpires;
+                    user1.Enabled = Enabled;
+
+                    //get index of Columns
+                    int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
+
+                    //write data to table
+                    dataTable1_ShowADuser(collumnNewUserID, "EXC", user1);
+                }
+                else
+                {
+                    log("Error. Nepodařilo se najít záložku. " + sheetName);
+                }
+
+
+
+            }
+        }*/
+
+        /*private string excel_GetConnectionString()
+        {
+            //create string for connection to excel file
+
+            Dictionary<string, string> props = new Dictionary<string, string>();
+
+            //check if path in textbox exist
+            string textboxText = ts_TextBox2.Text;
+            string filePath = "";
+            if (textboxText == "" | textboxText == "...")
+            {
+                filePath = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
+                MessageBox.Show("Nebyla vyplněna cesta k souboru.", "Otázka", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
+            else
+            {
+                filePath = textboxText;
+                if (!File.Exists(filePath))
+                {
+                    MessageBox.Show("Zadaný soubor nebyl nalezen.", "Upozornění", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+
+            // XLSX - Excel 2007, 2010, 2012, 2013
+            props["Provider"] = "Microsoft.ACE.OLEDB.12.0";
+            props["Extended Properties"] = "Excel 12.0 XML";
+            props["Data Source"] = filePath; //"C:\\info.xlsx";
+
+            // XLS - Excel 2003 and Older
+            //props["Provider"] = "Microsoft.Jet.OLEDB.4.0";
+            //props["Extended Properties"] = "Excel 8.0";
+            //props["Data Source"] = "C:\\info.xls";
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (KeyValuePair<string, string> prop in props)
+            {
+                sb.Append(prop.Key);
+                sb.Append('=');
+                sb.Append(prop.Value);
+                sb.Append(';');
+            }
+
+            return sb.ToString();
+        }*/
+
+        #endregion junkFromDesign_0.00.37
+
         /* ----- NEW design ----- */
 
         DataTable dataTable1;
-
+        
         private void b_Delete_Click(object sender, EventArgs e)
         {
             //button - reset table
@@ -538,6 +727,8 @@ namespace ADuser_creator
 
             ADuser userNew = new ADuser(dataTable1.Rows[rowID][collumnNewUserID].ToString());
             ADuser userAD = PS_SearchUser_UserName(userNew);
+            userAD = PS_GetUserGroups(userAD);
+
             if (userAD.nameAcco != "")
             {
                 dataTable1.Columns[collumnActualUserID].ReadOnly = false;
@@ -583,8 +774,9 @@ namespace ADuser_creator
                 {
                     //založení uživatele
                     //TODO: delete data from row 1
-                    ADuser newUser = dataTable1_createADuser("NEW_User");
-                    PS_CreateNewUser(newUser);
+                    ADuser newUser1 = dataTable1_createADuser("NEW_User");
+                    PS_CreateNewUser(newUser1);
+                    PS_AddUserToGroups(newUser1);
                 }
             }
             else
@@ -598,7 +790,13 @@ namespace ADuser_creator
         private void ts_getPath_Click(object sender, EventArgs e)
         {
             //ToolStripMenuItem - get current Directory to textBox (for excel load)
-            ts_TextBox2.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
+            ts_ExTextBoxPath.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
+        }
+
+        private void ts_getPathAC_Click(object sender, EventArgs e)
+        {
+            //ToolStripMenuItem - get current Directory to textBox (for excel autocompletion)
+            ts_ExTextBoxPathAC.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "Office.xlsx");
         }
 
         private void ts_loadExcel_Click(object sender, EventArgs e)
@@ -619,7 +817,7 @@ namespace ADuser_creator
                 log("Error. Nebylo zadáno číslo řádku.");
             }
 
-            excel_ReadFile(excelRow);
+            excel_readLine(excelRow);
         }
 
         private void ts_moveUser_Click(object sender, EventArgs e)
@@ -672,11 +870,13 @@ namespace ADuser_creator
                 ContextMenuStrip cmenu_path = new ContextMenuStrip();
                 cmenu_path.Items.Add("User Container");
                 cmenu_path.Items.Add("Test Container");
+                cmenu_path.Items.Add("Clone to Table");
                 cmenu_path.Items.Add("Clear");
 
                 cmenu_path.Items[0].Click += new System.EventHandler(this.tsPath_userContainer_Click);
                 cmenu_path.Items[1].Click += new System.EventHandler(this.tsPath_testContainer_Click);
-                cmenu_path.Items[2].Click += new System.EventHandler(this.tsPath_clear_Click);
+                cmenu_path.Items[2].Click += new System.EventHandler(this.tsPath_cloneToTable_Click);
+                cmenu_path.Items[3].Click += new System.EventHandler(this.tsPath_clear_Click);
                 cmenu_path.Show(MousePosition.X, MousePosition.Y);
 
                 ts_TextBoxPath.Control.ContextMenuStrip = cmenu_path;
@@ -687,9 +887,6 @@ namespace ADuser_creator
         private void ts_Test_Click(object sender, EventArgs e)
         {
             // ToolStripMenuItem - for test
-
-            //log(PS_SearchUser_Identity("ftester"));
-            //createUserFromColumn("NEW_User");
         }
 
         private void ts_createTestUser_Click(object sender, EventArgs e)
@@ -734,6 +931,21 @@ namespace ADuser_creator
             ts_userSetting.ShowDropDown();
         }
 
+        private void tsPath_cloneToTable_Click(object sender, EventArgs e)
+        {
+            //clone text from textbox to line "path" in table
+
+            string pathText = ts_TextBoxPath.Text;
+
+            //get column index
+            int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
+            //get row index of path
+            DataRow row = dataTable1.Select("type = 'Path'").FirstOrDefault();
+            int rowID = dataTable1.Rows.IndexOf(row);
+
+            dataTable1.Rows[rowID][collumnNewUserID] = pathText;
+        }
+
         private void tsPath_clear_Click(object sender, EventArgs e)
         {
             //set path in textbox (for move user)
@@ -750,21 +962,22 @@ namespace ADuser_creator
             dataTable1.Columns.Add("NEW_User", typeof(string));
             dataTable1.Columns.Add("Actual_User", typeof(string));
 
-            dataTable1.Rows.Add("zdroj", "");
+            dataTable1.Rows.Add("zdroj", "Local");
             dataTable1.Rows.Add("Křestní", "");
             dataTable1.Rows.Add("Příjmení", "");
             dataTable1.Rows.Add("Plné jméno", "");
             dataTable1.Rows.Add("Username", "");
+            dataTable1.Rows.Add("Email", "");
             dataTable1.Rows.Add("Kancelář", "");
             dataTable1.Rows.Add("Středisko", "");
+            dataTable1.Rows.Add("Popis", "");
+            dataTable1.Rows.Add("Pozice", "");
+            dataTable1.Rows.Add("Vedoucí", "");
+            dataTable1.Rows.Add("Skupina", "");
             dataTable1.Rows.Add("Tel", "");
             dataTable1.Rows.Add("TelOstatní", "");
             dataTable1.Rows.Add("Mob", "");
-            dataTable1.Rows.Add("Popis", "");
-            dataTable1.Rows.Add("Pozice", "");
             dataTable1.Rows.Add("Karta", "");
-            dataTable1.Rows.Add("Email", "");
-            dataTable1.Rows.Add("Manager", "");
             dataTable1.Rows.Add("Heslo", "");
             dataTable1.Rows.Add("Path", "", "");
             dataTable1.Rows.Add("ChangePasswordAtLogon", "False", "False");
@@ -797,10 +1010,12 @@ namespace ADuser_creator
             int rowFirstNameID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Křestní'").FirstOrDefault());
             int rowSecondNameID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Příjmení'").FirstOrDefault());
             int rowEmailID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Email'").FirstOrDefault());
-
-            //int rowOfficeID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Kancelář'").FirstOrDefault());
-            //int rowCenterID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Středisko'").FirstOrDefault());
-            //int rowDescriptionID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Popis'").FirstOrDefault());
+            int rowOfficeID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Kancelář'").FirstOrDefault());
+            int rowDepartmentID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Středisko'").FirstOrDefault());
+            int rowDescriptionID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Popis'").FirstOrDefault());
+            int rowPositionID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Pozice'").FirstOrDefault());
+            int rowGroup = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Skupina'").FirstOrDefault());
+            int rowManager = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Vedoucí'").FirstOrDefault());
 
             //automatic replenishment full name
             if (row1 == rowFullNameID & collum1 == collumnNewUserID)
@@ -881,7 +1096,59 @@ namespace ADuser_creator
                 }
             }
 
+            //automatic replenishment office, department, Description, position, Group (from excel table)
+            if (row1 == rowOfficeID & collum1 == collumnNewUserID)
+            {
+                if (dataTable1.Rows[row1][collum1].ToString() != "")
+                {
+                    string currentOffice = dataTable1.Rows[row1][collum1].ToString();
+                    string loadedDepartmen = "";
+                    string loadedDescription = "";
+                    string loadedPosition = "";
+                    string loadedGroup = "";
+                    string loadedManager = "";
 
+                    //load excel data
+                    try
+                    {
+                        string pathAR = ts_ExTextBoxPathAC.Text;
+                        Excel myExcel = new Excel(pathAR);
+
+                        loadedDepartmen = myExcel.loadAndCompare(currentOffice, "Department");
+                        loadedDescription = myExcel.loadAndCompare(currentOffice, "Description");
+                        loadedPosition = myExcel.loadAndCompare(currentOffice, "Title");
+                        loadedGroup = myExcel.loadAndCompare(currentOffice, "Group");
+                        loadedManager = myExcel.loadAndCompare(currentOffice, "Manager");
+
+                    }
+                    catch (Exception ee) { }
+
+                    if (dataTable1.Rows[rowDepartmentID][collum1].ToString() == "")
+                    {
+                        dataTable1.Rows[rowDepartmentID][collum1] = loadedDepartmen;
+                    }
+
+                    if (dataTable1.Rows[rowDescriptionID][collum1].ToString() == "")
+                    {
+                        dataTable1.Rows[rowDescriptionID][collum1] = loadedDescription;
+                    }
+
+                    if (dataTable1.Rows[rowPositionID][collum1].ToString() == "")
+                    {
+                        dataTable1.Rows[rowPositionID][collum1] = loadedPosition;
+                    }
+
+                    if (dataTable1.Rows[rowGroup][collum1].ToString() == "")
+                    {
+                        dataTable1.Rows[rowGroup][collum1] = loadedGroup;
+                    }
+
+                    if (dataTable1.Rows[rowManager][collum1].ToString() == "")
+                    {
+                        dataTable1.Rows[rowManager][collum1] = loadedManager;
+                    }
+                }
+            }
         }
 
         private void dataGridView1_KeyUp(object sender, KeyEventArgs e)
@@ -960,20 +1227,20 @@ namespace ADuser_creator
                     rows.ToArray();
 
                     //selected NEW_User collumn
-                    int collum2 = cells[0].ColumnIndex;
-                    Boolean collumRightOne = false;
-                    if (collum == collum2)
-                    {
-                        collumRightOne = true;
-                    }
+                    //int collum2 = cells[0].ColumnIndex;
+                    //Boolean collumRightOne = false;
+                    //if (collum == collum2)
+                    //{
+                    //    collumRightOne = true;
+                    //}
 
                     //selected multile cells
-                    int rowsCount = rows.Count();
-                    Boolean rowsMultipleSelect = false;
-                    if (rowsCount > 1)
-                    {
-                        rowsMultipleSelect = true;
-                    }
+                    //int rowsCount = rows.Count();
+                    //Boolean rowsMultipleSelect = false;
+                    //if (rowsCount > 1)
+                    //{
+                    //    rowsMultipleSelect = true;
+                    //}
 
                     //fill cell with data from clipboard
                     if (cells[0].RowIndex == 0 & cells.Count == 1)
@@ -981,6 +1248,7 @@ namespace ADuser_creator
                         //default setup (from top)
 
                         //get all rows (-4 bool variable)
+                        int rowsCount = rows.Count();
                         rowsCount = dataTable1.Rows.Count -4;
 
                         //insert all data to cells (loader + 1 -> skip first line, rowsCount-2 -> count+1 skipline+1)
@@ -1052,9 +1320,10 @@ namespace ADuser_creator
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Pozice'").FirstOrDefault())][column] = aduser1.title;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Karta'").FirstOrDefault())][column] = aduser1.cardNumber;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Email'").FirstOrDefault())][column] = aduser1.emailAddress;
-            dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Manager'").FirstOrDefault())][column] = aduser1.manager;
+            dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Vedoucí'").FirstOrDefault())][column] = aduser1.manager;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Heslo'").FirstOrDefault())][column] = aduser1.password;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Path'").FirstOrDefault())][column] = aduser1.path;
+            dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Skupina'").FirstOrDefault())][column] = aduser1.group;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'ChangePasswordAtLogon'").FirstOrDefault())][column] = aduser1.ChangePasswordAtLogon;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'CannotChangePassword'").FirstOrDefault())][column] = aduser1.CannotChangePassword;
             dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'PasswordNeverExpires'").FirstOrDefault())][column] = aduser1.PasswordNeverExpires;
@@ -1092,9 +1361,10 @@ namespace ADuser_creator
                 aduser1.title = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Pozice'").FirstOrDefault())][column].ToString();
                 aduser1.cardNumber = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Karta'").FirstOrDefault())][column].ToString();
                 aduser1.emailAddress = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Email'").FirstOrDefault())][column].ToString();
-                aduser1.manager = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Manager'").FirstOrDefault())][column].ToString();
+                aduser1.manager = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Vedoucí'").FirstOrDefault())][column].ToString();
                 aduser1.password = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Heslo'").FirstOrDefault())][column].ToString();
                 aduser1.path = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Path'").FirstOrDefault())][column].ToString();
+                aduser1.group = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Skupina'").FirstOrDefault())][column].ToString();
 
                 string ChangePasswordAtLogon = dataTable1.Rows[dataTable1.Rows.IndexOf(dataTable1.Select("type = 'ChangePasswordAtLogon'").FirstOrDefault())][column].ToString();
                 //aduser1.ChangePasswordAtLogon = Convert.ToBoolean(ChangePasswordAtLogon);
@@ -1302,6 +1572,60 @@ namespace ADuser_creator
             }
         }
 
+        private void PS_AddUserToGroups(ADuser user1)
+        {
+            //add user to groups
+            if (user1.nameAcco != "" & user1.group != "")
+            {
+                //start powershell
+                using (var runspace = RunspaceFactory.CreateRunspace())
+                {
+                    using (var powerShell = PowerShell.Create())
+                    {
+                        //log("Přidávám uživatele do skupin");
+                        string script = @"$groups = " + user1.ADgroup + " ; Foreach ($group in $groups){Add-ADGroupMember ($group) " + user1.nameAcco.addQuotes() + "}";
+
+                        //start powershell script
+                        powerShell.Runspace = runspace;
+                        powerShell.Runspace.Open();
+                        powerShell.AddScript(script);
+                        powerShell.Invoke();
+
+                        //check for errors
+                        if (powerShell.HadErrors == true)
+                        {
+                            log("Error. Během přidávání uživatele do skupin.");
+                            MessageBox.Show("Error. Během přidávání uživatele do skupin.");
+                            foreach (var error in powerShell.Streams.Error)
+                            {
+                                DialogResult nextmessage = MessageBox.Show("" + error, "Error", MessageBoxButtons.OKCancel);
+                                if (nextmessage == DialogResult.Cancel)
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            log("Hotovo. Uživatel přidán do skupiny.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (user1.nameAcco == "")
+                {
+                    //no account name
+                    MessageBox.Show("Error. Nebylo možné přidat uživatele do skupiny. Prázdné jméno!");
+                    log("Error. Nebylo možné přidat uživatele do skupiny. Prázdné jméno!");
+                }
+                else
+                {
+                    //no group
+                }
+
+            }
+        }
+
         private void PS_MoveUser(ADuser user1, string nameContainer)
         {
             //move user in diferent container in AD
@@ -1387,6 +1711,56 @@ namespace ADuser_creator
             return identity;
         }
 
+        private ADuser PS_GetUserGroups(ADuser user1)
+        {
+            //powershell script to get user groups (to ADuser)
+            string group = "";
+
+            //add user to groups
+            if (user1.nameAcco != "")
+            {
+                using (var runspace = RunspaceFactory.CreateRunspace())
+                {
+                    using (var powerShell = PowerShell.Create())
+                    {
+                        //log("Hledám skupiny uživatele");
+                        string script = "$groups = Get-ADPrincipalGroupMembership " + user1.nameAcco.addQuotes() + @" | select name | Foreach-object {$finalstring+= $_.name + "",""}; $finalstring";
+
+                        //start powershell script
+                        powerShell.Runspace = runspace;
+                        powerShell.Runspace.Open();
+                        powerShell.AddScript(script);
+                        PSObject[] results = powerShell.Invoke().ToArray();
+                        group = results[0].BaseObject.ToString();
+
+                        //check for errors
+                        if (powerShell.HadErrors == true)
+                        {
+                            log("Error. Během hledání skupin uživatele.");
+                            MessageBox.Show("Error. Během hledání skupin uživatele.");
+                            foreach (var error in powerShell.Streams.Error)
+                            {
+                                DialogResult nextmessage = MessageBox.Show("" + error, "Error", MessageBoxButtons.OKCancel);
+                                if (nextmessage == DialogResult.Cancel)
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            //log("Hotovo. Skupiny nalezeny.");
+                        }
+                    }
+                }
+                user1.ADgroup = group;
+            }
+            else
+            {
+                MessageBox.Show("Error. Nebylo možné přidat uživatele do skupiny. Prázdné jméno!");
+                log("Error. Nebylo možné přidat uživatele do skupiny. Prázdné jméno!");
+            }
+            return user1;
+        }
+
         private ADuser PS_SearchUser_UserName(ADuser user1)
         {
             //Launches PowerShell script to find a user based on the sAMAccountusername
@@ -1425,7 +1799,7 @@ namespace ADuser_creator
                                     user1.ChangePasswordAtLogon = true;
                                 }
                             }
-                            catch { } //nefunguje
+                            catch { }
                             try { if (Convert.ToBoolean(result.Members["CannotChangePassword"].Value) == true) { user1.CannotChangePassword = true; } } catch { }
                             try { if (Convert.ToBoolean(result.Members["PasswordNeverExpires"].Value) == true) { user1.PasswordNeverExpires = true; } } catch { }
                             try { if (Convert.ToBoolean(result.Members["Enabled"].Value) == true) { user1.Enabled = true; } } catch { }
@@ -1466,184 +1840,30 @@ namespace ADuser_creator
             return user1;
         }
 
-        private void excel_ReadFile(int rowNumber)
+        private void excel_readLine(int excelRow)
         {
-            //load line from excel file
+            //read excel line and insert in column
 
-            DataSet ds = new DataSet();
-            string connectionString = excel_GetConnectionString();
-            using (OleDbConnection conn = new OleDbConnection(connectionString))
+            //get index of Columns
+            int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
+
+            //excel
+            string path = ts_ExTextBoxPath.Text;
+            Excel myExcel = new Excel(path);
+            ADuser user1 = new ADuser();
+            try
             {
-                conn.Open();
-                OleDbCommand cmd = new OleDbCommand();
-                cmd.Connection = conn;
+                //read data
+                user1 = myExcel.readFileRow(excelRow);
 
-                // Get all Sheets in Excel File
-                DataTable dtSheet = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-
-                // Loop through all Sheets to get data
-                foreach (DataRow dr in dtSheet.Rows)
-                {
-                    string sheetName = dr["TABLE_NAME"].ToString();
-
-                    if (!sheetName.EndsWith("$"))
-                        continue;
-
-                    // Get all rows from the Sheet
-                    cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
-
-                    DataTable dt = new DataTable();
-                    dt.TableName = sheetName;
-
-                    OleDbDataAdapter da = new OleDbDataAdapter(cmd);
-                    da.Fill(dt);
-
-                    ds.Tables.Add(dt);
-                }
-
-                cmd = null;
-                conn.Close();
+                //write data to table
+                dataTable1_ShowADuser(collumnNewUserID, "EXC", user1);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Excel Error. " + e.Message);
             }
 
-            //check if load work
-            if (ds.Tables.Count == 0)
-            {
-                log("Error. Nepodařilo se načíst excel");
-                MessageBox.Show("Nepodařilo se načíst excel (in ReadExcelFile). Info: " + connectionString.ToString(), "Error");
-            }
-            else
-            {
-                string sheetName = "List1$";
-                if (ds.Tables.Contains(sheetName))
-                {
-                    DataTable table1 = ds.Tables[sheetName];
-                    int table1RowsNumber = table1.Rows.Count;
-                    DataRow row = table1.Rows[rowNumber];
-
-                    string nameGiven = "";
-                    string nameSurn = "";
-                    string password = "";
-                    string emailAddress = "";
-                    string office = "";
-                    string department = "";
-                    string tel = "";
-                    string mob = "";
-                    string description = "";
-                    string title = "";
-                    string telOthers = "";
-                    string cardNumber = "";
-                    string manager = "";
-                    string path = "";
-                    bool ChangePasswordAtLogon = false;
-                    bool CannotChangePassword = false;
-                    bool PasswordNeverExpires = false;
-                    bool Enabled = false;
-
-                    //load data (in rowNumber) by name of column
-                    string nameAcco = row["login"].ToString();
-                    string nameFull = row["jméno"].ToString();
-                    try { nameGiven = row["křestní"].ToString(); } catch { }
-                    try { nameSurn = row["příjmení"].ToString(); } catch { }
-                    try { password = row["heslo"].ToString(); } catch { }
-                    try { emailAddress = row["email"].ToString(); } catch { }
-                    try { office = row["kancelář"].ToString(); } catch { }
-                    try { department = row["středisko"].ToString(); } catch { }
-                    try { title = row["title"].ToString(); } catch { }
-                    try { description = row["description"].ToString(); } catch { }
-                    try { tel = row["tel"].ToString(); } catch { }
-                    try { mob = row["mob"].ToString(); } catch { }
-                    try { telOthers = row["otherTelephone"].ToString(); } catch { }
-                    try { cardNumber = row["karta"].ToString(); } catch { }
-                    try { manager = row["manager"].ToString(); } catch { }
-                    try { path = row["path"].ToString(); } catch { }
-                    try { ChangePasswordAtLogon = Convert.ToBoolean(row["ChangePasswordAtLogon"].ToString()); } catch { }
-                    try { CannotChangePassword = Convert.ToBoolean(row["CannotChangePassword"].ToString()); } catch { }
-                    try { PasswordNeverExpires = Convert.ToBoolean(row["PasswordNeverExpires"].ToString()); } catch { }
-                    try { Enabled = Convert.ToBoolean(row["Enabled"].ToString()); } catch { }
-
-
-                    //create instance of ADuser
-                    ADuser user1 = new ADuser(nameAcco);
-                    user1.nameGiven = nameGiven;
-                    user1.nameSurn = nameSurn;
-                    user1.nameFull = nameFull;
-                    //user1.nameAcco = nameAcco;
-                    user1.password = password;
-                    user1.emailAddress = emailAddress;
-                    user1.office = office;
-                    user1.department = department;
-                    user1.tel = tel;
-                    user1.mob = mob;
-                    user1.description = description;
-                    user1.title = title;
-                    user1.telOthers = telOthers;
-                    user1.cardNumber = cardNumber;
-                    user1.manager = manager;
-                    user1.path = path;
-                    user1.ChangePasswordAtLogon = ChangePasswordAtLogon;
-                    user1.CannotChangePassword = CannotChangePassword;
-                    user1.PasswordNeverExpires = PasswordNeverExpires;
-                    user1.Enabled = Enabled;
-
-                    //get index of Columns
-                    int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
-
-                    //write data to table
-                    dataTable1_ShowADuser(collumnNewUserID, "EXC", user1);
-                }
-                else
-                {
-                    log("Error. Nepodařilo se najít záložku. " + sheetName);
-                }
-
-
-
-            }
-        }
-
-        private string excel_GetConnectionString()
-        {
-            //create string for connection to excel file
-
-            Dictionary<string, string> props = new Dictionary<string, string>();
-
-            //check if path in textbox exist
-            string textboxText = ts_TextBox2.Text;
-            if (textboxText == "" | textboxText == "...")
-            {
-                filePath = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
-                MessageBox.Show("Nebyla vyplněna cesta k souboru.", "Otázka", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
-            }
-            else
-            {
-                filePath = textboxText;
-                if (!File.Exists(filePath))
-                {
-                    MessageBox.Show("Zadaný soubor nebyl nalezen.", "Upozornění", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            }
-
-            // XLSX - Excel 2007, 2010, 2012, 2013
-            props["Provider"] = "Microsoft.ACE.OLEDB.12.0";
-            props["Extended Properties"] = "Excel 12.0 XML";
-            props["Data Source"] = filePath; //"C:\\info.xlsx";
-
-            // XLS - Excel 2003 and Older
-            //props["Provider"] = "Microsoft.Jet.OLEDB.4.0";
-            //props["Extended Properties"] = "Excel 8.0";
-            //props["Data Source"] = "C:\\info.xls";
-
-            StringBuilder sb = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> prop in props)
-            {
-                sb.Append(prop.Key);
-                sb.Append('=');
-                sb.Append(prop.Value);
-                sb.Append(';');
-            }
-
-            return sb.ToString();
         }
 
         private void log(string message)
