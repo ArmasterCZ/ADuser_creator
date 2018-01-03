@@ -19,7 +19,7 @@ namespace ADuser_creator
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.43";
+        public string verze = "0.00.44";
         public Form1()
         {
             InitializeComponent();
@@ -42,6 +42,8 @@ namespace ADuser_creator
         //bug: check sort (add id column ? = for reorder back without data delete?)
         //bug: for automatic completion is enought part of string (wrong?)
         //better way of store excel paths "ts_ExTextBoxPath" & "ts_ExTextBoxPathAC" (right click menu with file names?)
+        //incease size of table when ... max or increase window size.
+        //Automatic replenishment for Path from outside source. excel | app.config
 
         /*Version info
          0.00.01 - Basic design idea
@@ -66,6 +68,7 @@ namespace ADuser_creator
          0.00.41 - excel class
          0.00.42 - group integration (ADuser [ADgroup], PS script [PS_GetUserGroups, PS_AddUserToGroups],table, + copy functions)
          0.00.43 - excel class redesign, add automatic completion for department,description,title,manager,group (from office), added cloneToTable method
+         0.00.44 - BugHunt: (search group for non existional user) => crash. + add Automatic replenishment for Path.
          */
 
         #region junkFromDesign_0.00.37
@@ -1016,6 +1019,7 @@ namespace ADuser_creator
             int rowPositionID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Pozice'").FirstOrDefault());
             int rowGroup = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Skupina'").FirstOrDefault());
             int rowManager = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Vedoucí'").FirstOrDefault());
+            int rowPath = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Path'").FirstOrDefault());
 
             //automatic replenishment full name
             if (row1 == rowFullNameID & collum1 == collumnNewUserID)
@@ -1149,6 +1153,17 @@ namespace ADuser_creator
                     }
                 }
             }
+
+            //automatic replenishment Path
+            if (row1 == rowPath & collum1 == collumnNewUserID)
+            {
+                if (dataTable1.Rows[row1][collum1].ToString() == "")
+                {
+                    //add it from outside?
+                    dataTable1.Rows[row1][collum1] = "OU=Users,OU=People,OU=Company,DC=sitel,DC=cz";
+                }
+            }
+
         }
 
         private void dataGridView1_KeyUp(object sender, KeyEventArgs e)
@@ -1731,7 +1746,7 @@ namespace ADuser_creator
                         powerShell.Runspace.Open();
                         powerShell.AddScript(script);
                         PSObject[] results = powerShell.Invoke().ToArray();
-                        group = results[0].BaseObject.ToString();
+                        group = results[0]?.BaseObject.ToString();
 
                         //check for errors
                         if (powerShell.HadErrors == true)
@@ -1755,8 +1770,8 @@ namespace ADuser_creator
             }
             else
             {
-                MessageBox.Show("Error. Nebylo možné přidat uživatele do skupiny. Prázdné jméno!");
-                log("Error. Nebylo možné přidat uživatele do skupiny. Prázdné jméno!");
+                //MessageBox.Show("Error. Nebylo možné získat skupiny uživatele. Prázdné jméno!");
+                //log("Error. Nebylo možné získat skupiny uživatele. Prázdné jméno!");
             }
             return user1;
         }

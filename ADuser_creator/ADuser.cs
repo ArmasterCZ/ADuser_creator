@@ -221,7 +221,7 @@ namespace ADuser_creator
             {
                 //remove last character if string exist (for input from PS)
                 string inputGroup = value;
-                if (inputGroup != null | inputGroup != "")
+                if (!(inputGroup == null | inputGroup == ""))
                 {
                     this.group = inputGroup.Remove(inputGroup.Length - 1);
                 }
