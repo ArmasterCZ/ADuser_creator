@@ -19,7 +19,7 @@ namespace ADuser_creator
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.44";
+        public string verze = "0.00.46";
         public Form1()
         {
             InitializeComponent();
@@ -38,12 +38,12 @@ namespace ADuser_creator
         //create method for Compare User (and PS script to change only diferent item)
         //feature: add log (in text file)
         //feature: show powershell script, first line date and time.
-        //bug: ctrl+v (get nuber of row from datagridrow. Bad when sort happend)
+        //feature: rearange row index for completion (when sort happend) (+delete hotfix firstRowIsFirst under dataGridView1_CellEnter)
         //bug: check sort (add id column ? = for reorder back without data delete?)
         //bug: for automatic completion is enought part of string (wrong?)
         //better way of store excel paths "ts_ExTextBoxPath" & "ts_ExTextBoxPathAC" (right click menu with file names?)
         //incease size of table when ... max or increase window size.
-        //Automatic replenishment for Path from outside source. excel | app.config
+        //Automatic replenishment for Path from outside source. (excel | app.config)
 
         /*Version info
          0.00.01 - Basic design idea
@@ -69,6 +69,8 @@ namespace ADuser_creator
          0.00.42 - group integration (ADuser [ADgroup], PS script [PS_GetUserGroups, PS_AddUserToGroups],table, + copy functions)
          0.00.43 - excel class redesign, add automatic completion for department,description,title,manager,group (from office), added cloneToTable method
          0.00.44 - BugHunt: (search group for non existional user) => crash. + add Automatic replenishment for Path.
+         0.00.45 - (removeStartEndSpaces) remove spaces when (ctrl+v) to table hapend
+         0.00.46 - BugHunt: ctrl+v (get number of row from datagridrow and insert to datatable1. Bad when sort happend) + completion(disabled when sort happend).
          */
 
         #region junkFromDesign_0.00.37
@@ -1021,8 +1023,21 @@ namespace ADuser_creator
             int rowManager = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Vedoucí'").FirstOrDefault());
             int rowPath = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Path'").FirstOrDefault());
 
+            //check if rows index is same for table and gridWiew
+            string firstRowName = dataGridView1[0, 0].Value.ToString();
+            int firstRowInDataTable = dataTable1.Rows.IndexOf(dataTable1.Select("type = '" + firstRowName + "'").FirstOrDefault());
+            bool firstRowIsFirst = (firstRowInDataTable == 0);
+
+            //if (!(firstRowInDataTable == 0))
+            //{
+            //    //set rows index from  dataGridView1
+            //    string selectedRowName = dataGridView1[0, rowFullNameID].Value.ToString();
+            //    int rowInDataTable = dataTable1.Rows.IndexOf(dataTable1.Select("type = '" + selectedRowName + "'").FirstOrDefault());
+            //    dataTable1.Rows[0][1].ToString();
+            //}
+
             //automatic replenishment full name
-            if (row1 == rowFullNameID & collum1 == collumnNewUserID)
+            if (row1 == rowFullNameID & collum1 == collumnNewUserID & firstRowIsFirst)
             {
 
                 if (dataTable1.Rows[row1][collum1].ToString() == "")
@@ -1038,7 +1053,7 @@ namespace ADuser_creator
             }
 
             //automatic replenishment First and Second name (from full name)
-            if (row1 == rowFullNameID & collum1 == collumnNewUserID)
+            if (row1 == rowFullNameID & collum1 == collumnNewUserID & firstRowIsFirst)
             {
                 if (dataTable1.Rows[row1][collum1].ToString() != "")
                 {
@@ -1068,7 +1083,7 @@ namespace ADuser_creator
             }
 
             //automatic replenishment Username
-            if (row1 == rowAccountNameID & collum1 == collumnNewUserID)
+            if (row1 == rowAccountNameID & collum1 == collumnNewUserID & firstRowIsFirst)
             {
 
                 if (dataTable1.Rows[row1][collum1].ToString() == "")
@@ -1088,7 +1103,7 @@ namespace ADuser_creator
             }
 
             //automatic replenishment Email
-            if (row1 == rowEmailID & collum1 == collumnNewUserID)
+            if (row1 == rowEmailID & collum1 == collumnNewUserID & firstRowIsFirst)
             {
                 string userName = dataTable1.Rows[rowAccountNameID][collumnNewUserID].ToString();
                 if (dataTable1.Rows[row1][collum1].ToString() == "")
@@ -1101,7 +1116,7 @@ namespace ADuser_creator
             }
 
             //automatic replenishment office, department, Description, position, Group (from excel table)
-            if (row1 == rowOfficeID & collum1 == collumnNewUserID)
+            if (row1 == rowOfficeID & collum1 == collumnNewUserID & firstRowIsFirst)
             {
                 if (dataTable1.Rows[row1][collum1].ToString() != "")
                 {
@@ -1155,7 +1170,7 @@ namespace ADuser_creator
             }
 
             //automatic replenishment Path
-            if (row1 == rowPath & collum1 == collumnNewUserID)
+            if (row1 == rowPath & collum1 == collumnNewUserID & firstRowIsFirst)
             {
                 if (dataTable1.Rows[row1][collum1].ToString() == "")
                 {
@@ -1210,7 +1225,11 @@ namespace ADuser_creator
                         int loader = 0;
                         foreach (int rowID in rows)
                         {
-                            dataTable1.Rows[rowID][collum] = "";
+                            //(dataTable1.row.index not need to be same as dataGridView1.row.index) this two lines fix it
+                            string selectedRowName = dataGridView1[0, rowID].Value.ToString();
+                            int rowInDataTable = dataTable1.Rows.IndexOf(dataTable1.Select("type = '" + selectedRowName + "'").FirstOrDefault());
+
+                            dataTable1.Rows[rowInDataTable][collum] = "";
                             loader++;
                         }
                     }
@@ -1224,8 +1243,11 @@ namespace ADuser_creator
 
                 //separate clipboard on lines
                 string clipboardString = Clipboard.GetText();
+                //remove character for end of line + separate cells
                 string[] lines = clipboardString.Replace("\r", "").Replace("\n", "").Split('\t');
                 int linesCount = lines.Length;
+
+                //remove space in last character
 
                 //get idea what to do with clipboard data (based on celected cell/s)
                 int collum = dataTable1.Columns.IndexOf("NEW_User");
@@ -1257,8 +1279,14 @@ namespace ADuser_creator
                     //    rowsMultipleSelect = true;
                     //}
 
+                    //check if rows index is same for table and gridWiew
+                    string firstRowName = dataGridView1[0, 0].Value.ToString();
+                    int firstRowInDataTable = dataTable1.Rows.IndexOf(dataTable1.Select("type = '" + firstRowName + "'").FirstOrDefault());
+                    bool firstRowIsFirst = (firstRowInDataTable == 0);
+
+
                     //fill cell with data from clipboard
-                    if (cells[0].RowIndex == 0 & cells.Count == 1)
+                    if (cells[0].RowIndex == 0 & cells.Count == 1 & firstRowIsFirst)
                     {
                         //default setup (from top)
 
@@ -1272,7 +1300,7 @@ namespace ADuser_creator
                             if (loader <= linesCount - 1)
                             {
                                 //insert Data from clipboard
-                                dataTable1.Rows[loader + 1][collum] = lines[loader];
+                                dataTable1.Rows[loader + 1][collum] = lines[loader].removeStartEndSpaces();
                             }
                             else
                             {
@@ -1289,13 +1317,22 @@ namespace ADuser_creator
                         {
                             if (loader <= linesCount - 1)
                             {
+                                //(dataTable1.row.index not need to be same as dataGridView1.row.index) this two lines fix it
+                                string selectedRowName = dataGridView1[0, rowID].Value.ToString(); //get name of selected row (in dataGrid)
+                                int rowInDataTable = dataTable1.Rows.IndexOf(dataTable1.Select("type = '" + selectedRowName + "'").FirstOrDefault()); //find index of name in dataTable1
+
                                 //insert data to table from clipboard
-                                dataTable1.Rows[rowID][collum] = lines[loader];
+                                dataTable1.Rows[rowInDataTable][collum] = lines[loader].removeStartEndSpaces();
+
                             }
                             else
                             {
+                                //(dataTable1.row.index not need to be same as dataGridView1.row.index) this two lines fix it
+                                string selectedRowName = dataGridView1[0, rowID].Value.ToString(); //get name of selected row (in dataGrid)
+                                int rowInDataTable = dataTable1.Rows.IndexOf(dataTable1.Select("type = '" + selectedRowName + "'").FirstOrDefault()); //find index of name in dataTable1
+
                                 //erase data outside clipboard data range
-                                dataTable1.Rows[rowID][collum] = "";
+                                dataTable1.Rows[rowInDataTable][collum] = "";
                             }
                             loader++;
                         }
@@ -1930,6 +1967,14 @@ namespace ExtensionMethods
             }
 
             return sb.ToString();
+        }
+
+        public static string removeStartEndSpaces(this string input)
+        {
+            // remove spaces from start and end of string [not middle spaces]
+            input = input.Trim();
+
+            return input;
         }
     }
 }
