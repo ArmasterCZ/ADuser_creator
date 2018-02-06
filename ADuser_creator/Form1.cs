@@ -19,7 +19,7 @@ namespace ADuser_creator
 {
     public partial class Form1 : Form
     {
-        public string verze = "0.00.46";
+        public string verze = "0.00.48";
         public Form1()
         {
             InitializeComponent();
@@ -33,47 +33,99 @@ namespace ADuser_creator
             ts_ExTextBoxPathAC.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "Office.xlsx");
         }
 
-
-        //TODO: 
-        //create method for Compare User (and PS script to change only diferent item)
-        //feature: add log (in text file)
-        //feature: show powershell script, first line date and time.
-        //feature: rearange row index for completion (when sort happend) (+delete hotfix firstRowIsFirst under dataGridView1_CellEnter)
-        //bug: check sort (add id column ? = for reorder back without data delete?)
-        //bug: for automatic completion is enought part of string (wrong?)
-        //better way of store excel paths "ts_ExTextBoxPath" & "ts_ExTextBoxPathAC" (right click menu with file names?)
-        //incease size of table when ... max or increase window size.
-        //Automatic replenishment for Path from outside source. (excel | app.config)
-
-        /*Version info
-         0.00.01 - Basic design idea
-         0.00.05 - method for create new AD user
-         0.00.23 - more parameters in ADuser class
-         0.00.24 - code cleanup 1/2
-         0.00.25 - custom patch for excel load
-         0.00.27 - added move user function
-         0.00.28 - add metod addQuotes, PS_SearchUser_Identity
-         0.00.29 - more ADuser parameters (otherTelephone, EmailAddress, manager)
-         0.00.30 - better PS script for write user
-         0.00.31 - bug fixed, additional parameters to load from excel
-         0.00.32 - automatic replenishment of the table
-         0.00.33 - bugfix: copy to cell path only container names. delete name of profile. 
-         0.00.34 - added right click menu for container move
-         0.00.35 - remove diacritic from username (in autocomplete), added split from full name to first and second cell.
-         0.00.36 - added icons
-         0.00.37 - project rename. "PowerShell2_CreateADuserFromExcel" -> "ADuser_creator"
-         0.00.38 - redesign 10% (form)
-         0.00.39 - redesign 80% (functions) add clear for column if user was not found
-         0.00.40 - redesign 100%(excel and ctrl+V)
-         0.00.41 - excel class
-         0.00.42 - group integration (ADuser [ADgroup], PS script [PS_GetUserGroups, PS_AddUserToGroups],table, + copy functions)
-         0.00.43 - excel class redesign, add automatic completion for department,description,title,manager,group (from office), added cloneToTable method
-         0.00.44 - BugHunt: (search group for non existional user) => crash. + add Automatic replenishment for Path.
-         0.00.45 - (removeStartEndSpaces) remove spaces when (ctrl+v) to table hapend
-         0.00.46 - BugHunt: ctrl+v (get number of row from datagridrow and insert to datatable1. Bad when sort happend) + completion(disabled when sort happend).
-         */
-
         #region junkFromDesign_0.00.37
+        /*private void ts_TextBoxPath_MouseDown(object sender, MouseEventArgs e)
+    {
+        //Show menu for add apecific text to textbox (for move user)
+
+        if (e.Button == MouseButtons.Right)
+        {
+            //create menu for quick proposal
+            ContextMenuStrip cmenu_path = new ContextMenuStrip();
+            cmenu_path.Items.Add("User Container");
+            cmenu_path.Items.Add("Test Container");
+            cmenu_path.Items.Add("Clone to Table");
+            cmenu_path.Items.Add("Clear");
+
+            cmenu_path.Items[0].Click += new System.EventHandler(this.tsPath_userContainer_Click);
+            cmenu_path.Items[1].Click += new System.EventHandler(this.tsPath_testContainer_Click);
+            cmenu_path.Items[2].Click += new System.EventHandler(this.tsPath_cloneToTable_Click);
+            cmenu_path.Items[3].Click += new System.EventHandler(this.tsPath_clear_Click);
+            cmenu_path.Show(MousePosition.X, MousePosition.Y);
+
+            ts_TextBoxPath.Control.ContextMenuStrip = cmenu_path;
+        }
+
+    }
+
+    private void ts_Test_Click(object sender, EventArgs e)
+    {
+        // ToolStripMenuItem - for test
+    }
+
+    private void ts_createTestUser_Click(object sender, EventArgs e)
+    {
+        //create specific testUser10 in ADuser and put it in AD
+        ADuser user1 = new ADuser();
+        user1.nameGiven = "test";
+        user1.nameSurn = "User 10";
+        user1.nameFull = "test User 10";
+        user1.nameAcco = "testUser10";
+        user1.password = "1a2z3A4Z5b";
+        user1.emailAddress = "testEmail10.cz";
+        user1.office = "10000";
+        user1.department = "10011";
+        user1.tel = "000";
+        user1.mob = "000 000 000";
+        user1.description = "testovací účet";
+        user1.title = "Pozice záložní Tester";
+        user1.telOthers = "000;001;002";
+        user1.cardNumber = "001";
+        user1.manager = "ftester";
+        user1.ChangePasswordAtLogon = false;
+        user1.CannotChangePassword = true;
+        user1.PasswordNeverExpires = true;
+        user1.Enabled = true;
+        user1.path = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
+
+        PS_CreateNewUser(user1);
+    }
+
+    private void tsPath_userContainer_Click(object sender, EventArgs e)
+    {
+        //set path in textbox (for move user)
+        ts_TextBoxPath.Text = "OU=Users,OU=People,OU=Company,DC=sitel,DC=cz";
+        ts_userSetting.ShowDropDown();
+    }
+
+    private void tsPath_testContainer_Click(object sender, EventArgs e)
+    {
+        //set path in textbox (for move user)
+        ts_TextBoxPath.Text = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
+        ts_userSetting.ShowDropDown();
+    }
+
+    private void tsPath_cloneToTable_Click(object sender, EventArgs e)
+    {
+        //clone text from textbox to line "path" in table
+
+        string pathText = ts_TextBoxPath.Text;
+
+        //get column index
+        int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
+        //get row index of path
+        DataRow row = dataTable1.Select("type = 'Path'").FirstOrDefault();
+        int rowID = dataTable1.Rows.IndexOf(row);
+
+        dataTable1.Rows[rowID][collumnNewUserID] = pathText;
+    }
+
+    private void tsPath_clear_Click(object sender, EventArgs e)
+    {
+        //set path in textbox (for move user)
+        ts_TextBoxPath.Text = "";
+        ts_userSetting.ShowDropDown();
+    }*/
 
         /*private void PS_EditExistUser(ADuser user1)
         {
@@ -792,10 +844,17 @@ namespace ADuser_creator
 
         }
 
-        private void ts_getPath_Click(object sender, EventArgs e)
+        private void ts_changePathExcel_Click(object sender, EventArgs e)
         {
+            FormChangePath formChangePath = new FormChangePath(ts_ExTextBoxPath.Text);
+            formChangePath.ShowDialog();
+            if (formChangePath.DialogResult == DialogResult.Yes)
+            {
+                ts_ExTextBoxPath.Text = formChangePath.output;
+            }
+            
             //ToolStripMenuItem - get current Directory to textBox (for excel load)
-            ts_ExTextBoxPath.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
+            //ts_ExTextBoxPath.Text = string.Format("{0}\\{1}", Directory.GetCurrentDirectory(), "info.xlsx");
         }
 
         private void ts_getPathAC_Click(object sender, EventArgs e)
@@ -823,139 +882,68 @@ namespace ADuser_creator
             }
 
             excel_readLine(excelRow);
+            dataTable1_selectRowsForCompletion();
         }
 
         private void ts_moveUser_Click(object sender, EventArgs e)
         {
+            
             //ToolStripMenuItem - move (new) user to diferent container
             log("Spuštěn: " + sender);
             label_Actual.Text = "...";
 
             //get index of Columns
             int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
-            //int collumnActualUserID = dataTable1.Columns.IndexOf("Actual_User");
+            //get row index of userName
+            int rowIdUserName = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Username'").FirstOrDefault());
             //get row index of path
-            int rowID = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Username'").FirstOrDefault());
+            int rowIdPath = dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Path'").FirstOrDefault());
+            //remove selection (editet text return "")
+            dataGridView1.CurrentCell = null;
+            //get name of user for move
+            string nameNewUser = dataTable1.Rows[rowIdUserName][collumnNewUserID].ToString();
 
-            string nameNewUser = dataTable1.Rows[rowID][collumnNewUserID].ToString();
-            ADuser existUser = PS_SearchUser_UserName(new ADuser(nameNewUser));
-            string nameExistUser = existUser.nameAcco;
-            //Clear error. canot find user. Will be added more accurate error.
-            label_Actual.Text = "...";
+            //create new form for getting container path
+            FormMoveUser formMoveUser = new FormMoveUser(nameNewUser);
+            DialogResult result = formMoveUser.ShowDialog();
 
-            if (nameNewUser != "")
+            //copy text from closed form to line "path" in table
+            string pathText = formMoveUser.resultText;
+
+            if (result == DialogResult.Yes)
             {
-                //check if user exist
-                if (nameExistUser == nameNewUser)
+                //move user to diferent container
+                //search for user in AD
+                ADuser existUser = PS_SearchUser_UserName(new ADuser(nameNewUser));
+                //Clear error. canot find user. Will be added more accurate error.
+                label_Actual.Text = "...";
+                string nameExistUser = existUser.nameAcco;
+                if (nameNewUser != "")
                 {
-                    //move user
-                    ADuser newUser = dataTable1_createADuser("NEW_User");
-                    PS_MoveUser(newUser, ts_TextBoxPath.Text);
+                    //check if user exist
+                    if (nameExistUser == nameNewUser)
+                    {
+                        //move user
+                        ADuser newUser = dataTable1_createADuser("NEW_User");
+                        PS_MoveUser(newUser, pathText);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error. Uživatel k přesunu neexistuje.");
+                        log("Error. Uživatel k přesunu neexistuje!");
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Error. Uživatel k přesunu neexistuje.");
-                    log("Error. Uživatel k přesunu neexistuje!");
+                    MessageBox.Show("Error. Přesunovaný uživatel nemůže mít prázdné jméno!");
+                    log("Error. Přesunovaný uživatel nemůže mít prázdné jméno!");
                 }
             }
-            else
+            else if (result == DialogResult.No)
             {
-                MessageBox.Show("Error. Přesunovaný uživatel nemůže mít prázdné jméno!");
-                log("Error. Přesunovaný uživatel nemůže mít prázdné jméno!");
+                //write to table
+                dataTable1.Rows[rowIdPath][collumnNewUserID] = pathText;
             }
-        }
-
-        private void ts_TextBoxPath_MouseDown(object sender, MouseEventArgs e)
-        {
-            //Show menu for add apecific text to textbox (for move user)
-
-            if (e.Button == MouseButtons.Right)
-            {
-                //create menu for quick proposal
-                ContextMenuStrip cmenu_path = new ContextMenuStrip();
-                cmenu_path.Items.Add("User Container");
-                cmenu_path.Items.Add("Test Container");
-                cmenu_path.Items.Add("Clone to Table");
-                cmenu_path.Items.Add("Clear");
-
-                cmenu_path.Items[0].Click += new System.EventHandler(this.tsPath_userContainer_Click);
-                cmenu_path.Items[1].Click += new System.EventHandler(this.tsPath_testContainer_Click);
-                cmenu_path.Items[2].Click += new System.EventHandler(this.tsPath_cloneToTable_Click);
-                cmenu_path.Items[3].Click += new System.EventHandler(this.tsPath_clear_Click);
-                cmenu_path.Show(MousePosition.X, MousePosition.Y);
-
-                ts_TextBoxPath.Control.ContextMenuStrip = cmenu_path;
-            }
-
-        }
-
-        private void ts_Test_Click(object sender, EventArgs e)
-        {
-            // ToolStripMenuItem - for test
-        }
-
-        private void ts_createTestUser_Click(object sender, EventArgs e)
-        {
-            //create specific testUser10 in ADuser and put it in AD
-            ADuser user1 = new ADuser();
-            user1.nameGiven = "test";
-            user1.nameSurn = "User 10";
-            user1.nameFull = "test User 10";
-            user1.nameAcco = "testUser10";
-            user1.password = "1a2z3A4Z5b";
-            user1.emailAddress = "testEmail10.cz";
-            user1.office = "10000";
-            user1.department = "10011";
-            user1.tel = "000";
-            user1.mob = "000 000 000";
-            user1.description = "testovací účet";
-            user1.title = "Pozice záložní Tester";
-            user1.telOthers = "000;001;002";
-            user1.cardNumber = "001";
-            user1.manager = "ftester";
-            user1.ChangePasswordAtLogon = false;
-            user1.CannotChangePassword = true;
-            user1.PasswordNeverExpires = true;
-            user1.Enabled = true;
-            user1.path = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
-
-            PS_CreateNewUser(user1);
-        }
-
-        private void tsPath_userContainer_Click(object sender, EventArgs e)
-        {
-            //set path in textbox (for move user)
-            ts_TextBoxPath.Text = "OU=Users,OU=People,OU=Company,DC=sitel,DC=cz";
-            ts_userSetting.ShowDropDown();
-        }
-
-        private void tsPath_testContainer_Click(object sender, EventArgs e)
-        {
-            //set path in textbox (for move user)
-            ts_TextBoxPath.Text = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
-            ts_userSetting.ShowDropDown();
-        }
-
-        private void tsPath_cloneToTable_Click(object sender, EventArgs e)
-        {
-            //clone text from textbox to line "path" in table
-
-            string pathText = ts_TextBoxPath.Text;
-
-            //get column index
-            int collumnNewUserID = dataTable1.Columns.IndexOf("NEW_User");
-            //get row index of path
-            DataRow row = dataTable1.Select("type = 'Path'").FirstOrDefault();
-            int rowID = dataTable1.Rows.IndexOf(row);
-
-            dataTable1.Rows[rowID][collumnNewUserID] = pathText;
-        }
-
-        private void tsPath_clear_Click(object sender, EventArgs e)
-        {
-            //set path in textbox (for move user)
-            ts_TextBoxPath.Text = "";
-            ts_userSetting.ShowDropDown();
         }
 
         private void dataGridView1_ResetTable()
@@ -1344,6 +1332,28 @@ namespace ADuser_creator
                 }
             }
 
+        }
+
+        private void dataTable1_selectRowsForCompletion()
+        {
+            //secelct specific rows for automatic completion
+            try
+            {
+                List<int> listOfRows = new List<int>();
+                listOfRows.Add(dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Plné jméno'").FirstOrDefault()));
+                listOfRows.Add(dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Username'").FirstOrDefault()));
+                listOfRows.Add(dataTable1.Rows.IndexOf(dataTable1.Select("type = 'Kancelář'").FirstOrDefault()));
+
+                foreach (int row in listOfRows)
+                {
+                    dataGridView1.CurrentCell = dataGridView1.Rows[row].Cells[1];
+                    dataGridView1.BeginEdit(true);
+                }
+
+            }
+            catch
+            {
+            }
         }
 
         private void dataTable1_CopyColumn(int SourceColumn, int DestinationColumn)
@@ -1927,7 +1937,6 @@ namespace ADuser_creator
             }
 
         }
-
     }
 }
 

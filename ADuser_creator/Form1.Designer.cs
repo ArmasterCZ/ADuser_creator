@@ -45,14 +45,13 @@
             this.ts_MenuItem_loadExcel = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_TextBox1 = new System.Windows.Forms.ToolStripTextBox();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.ts_getPath = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_changePathExcel = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_ExTextBoxPath = new System.Windows.Forms.ToolStripTextBox();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.ts_getPathAC = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_ExTextBoxPathAC = new System.Windows.Forms.ToolStripTextBox();
             this.ts_userSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_MenuItem_moveUser = new System.Windows.Forms.ToolStripMenuItem();
-            this.ts_TextBoxPath = new System.Windows.Forms.ToolStripTextBox();
             this.ts_test = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_test1 = new System.Windows.Forms.ToolStripMenuItem();
             this.nic1ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -174,7 +173,7 @@
             this.ts_MenuItem_loadExcel,
             this.ts_TextBox1,
             this.toolStripSeparator2,
-            this.ts_getPath,
+            this.ts_changePathExcel,
             this.ts_ExTextBoxPath,
             this.toolStripSeparator3,
             this.ts_getPathAC,
@@ -201,16 +200,17 @@
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(220, 6);
             // 
-            // ts_getPath
+            // ts_changePathExcel
             // 
-            this.ts_getPath.Name = "ts_getPath";
-            this.ts_getPath.Size = new System.Drawing.Size(223, 22);
-            this.ts_getPath.Text = "Current path for load";
-            this.ts_getPath.Click += new System.EventHandler(this.ts_getPath_Click);
+            this.ts_changePathExcel.Name = "ts_changePathExcel";
+            this.ts_changePathExcel.Size = new System.Drawing.Size(223, 22);
+            this.ts_changePathExcel.Text = "Change Excel Path";
+            this.ts_changePathExcel.Click += new System.EventHandler(this.ts_changePathExcel_Click);
             // 
             // ts_ExTextBoxPath
             // 
             this.ts_ExTextBoxPath.AcceptsReturn = true;
+            this.ts_ExTextBoxPath.Enabled = false;
             this.ts_ExTextBoxPath.Name = "ts_ExTextBoxPath";
             this.ts_ExTextBoxPath.Size = new System.Drawing.Size(100, 23);
             this.ts_ExTextBoxPath.Text = "D:/info.xlsx";
@@ -236,8 +236,7 @@
             // ts_userSetting
             // 
             this.ts_userSetting.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.ts_MenuItem_moveUser,
-            this.ts_TextBoxPath});
+            this.ts_MenuItem_moveUser});
             this.ts_userSetting.Name = "ts_userSetting";
             this.ts_userSetting.Size = new System.Drawing.Size(82, 20);
             this.ts_userSetting.Text = "User Setting";
@@ -245,17 +244,9 @@
             // ts_MenuItem_moveUser
             // 
             this.ts_MenuItem_moveUser.Name = "ts_MenuItem_moveUser";
-            this.ts_MenuItem_moveUser.Size = new System.Drawing.Size(360, 22);
+            this.ts_MenuItem_moveUser.Size = new System.Drawing.Size(152, 22);
             this.ts_MenuItem_moveUser.Text = "Move User";
             this.ts_MenuItem_moveUser.Click += new System.EventHandler(this.ts_moveUser_Click);
-            // 
-            // ts_TextBoxPath
-            // 
-            this.ts_TextBoxPath.AcceptsReturn = true;
-            this.ts_TextBoxPath.Name = "ts_TextBoxPath";
-            this.ts_TextBoxPath.Size = new System.Drawing.Size(300, 23);
-            this.ts_TextBoxPath.Text = "OU=Test,OU=Service,OU=Company,DC=sitel,DC=cz";
-            this.ts_TextBoxPath.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ts_TextBoxPath_MouseDown);
             // 
             // ts_test
             // 
@@ -277,7 +268,6 @@
             this.ts_test1.Name = "ts_test1";
             this.ts_test1.Size = new System.Drawing.Size(158, 22);
             this.ts_test1.Text = "test (nic nedělá)";
-            this.ts_test1.Click += new System.EventHandler(this.ts_Test_Click);
             // 
             // nic1ToolStripMenuItem
             // 
@@ -321,7 +311,6 @@
             this.ts_createTestUser.Name = "ts_createTestUser";
             this.ts_createTestUser.Size = new System.Drawing.Size(158, 22);
             this.ts_createTestUser.Text = "create test user";
-            this.ts_createTestUser.Click += new System.EventHandler(this.ts_createTestUser_Click);
             // 
             // Form1
             // 
@@ -367,11 +356,10 @@
         private System.Windows.Forms.ToolStripTextBox ts_TextBox1;
         private System.Windows.Forms.ToolStripMenuItem ts_test;
         private System.Windows.Forms.ToolStripMenuItem ts_test1;
-        private System.Windows.Forms.ToolStripMenuItem ts_getPath;
+        private System.Windows.Forms.ToolStripMenuItem ts_changePathExcel;
         private System.Windows.Forms.ToolStripTextBox ts_ExTextBoxPath;
         private System.Windows.Forms.ToolStripMenuItem ts_userSetting;
         private System.Windows.Forms.ToolStripMenuItem ts_MenuItem_moveUser;
-        private System.Windows.Forms.ToolStripTextBox ts_TextBoxPath;
         private System.Windows.Forms.ToolStripMenuItem ts_createTestUser;
         private System.Windows.Forms.ToolStripMenuItem nic1ToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;

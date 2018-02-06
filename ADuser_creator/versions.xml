@@ -1,0 +1,42 @@
+﻿<info>
+  <TODO>
+    create method for Compare User(and PS script to change only diferent item)
+    feature: add log(in text file)
+    feature: show powershell script, first line date and time.
+    feature: rearange row index for completion(when sort happend) (+delete hotfix firstRowIsFirst under dataGridView1_CellEnter)
+    bug: check sort(add id column? = for reorder back without data delete?)
+    bug: for automatic completion is enought part of string (wrong?)
+    incease size of table when...max or increase window size.
+    Automatic replenishment for Path from outside source. (excel | app.config)
+  </TODO>
+
+  <version>
+    0.00.01 - Basic design idea
+    0.00.05 - method for create new AD user
+    0.00.23 - more parameters in ADuser class
+    0.00.24 - code cleanup 1/2
+    0.00.25 - custom patch for excel load
+    0.00.27 - added move user function
+    0.00.28 - add metod addQuotes, PS_SearchUser_Identity
+    0.00.29 - more ADuser parameters (otherTelephone, EmailAddress, manager)
+    0.00.30 - better PS script for write user
+    0.00.31 - bug fixed, additional parameters to load from excel
+    0.00.32 - automatic replenishment of the table
+    0.00.33 - bugfix: copy to cell path only container names. delete name of profile.
+    0.00.34 - added right click menu for container move
+    0.00.35 - remove diacritic from username (in autocomplete), added split from full name to first and second cell.
+    0.00.36 - added icons
+    0.00.37 - project rename. "PowerShell2_CreateADuserFromExcel" -> "ADuser_creator"
+    0.00.38 - redesign 10% (form)
+    0.00.39 - redesign 80% (functions) add clear for column if user was not found
+    0.00.40 - redesign 100%(excel and ctrl+V)
+    0.00.41 - excel class
+    0.00.42 - group integration (ADuser [ADgroup], PS script [PS_GetUserGroups, PS_AddUserToGroups],table, + copy functions)
+    0.00.43 - excel class redesign, add automatic completion for department,description,title,manager,group (from office), added cloneToTable method
+    0.00.44 - BugHunt: (search group for non existional user) => crash. + add Automatic replenishment for Path.
+    0.00.45 - (removeStartEndSpaces) remove spaces when (ctrl+v) to table hapend
+    0.00.46 - BugHunt: ctrl+v (get number of row from datagridrow and insert to datatable1. Bad when sort happend) + completion(disabled when sort happend).
+    0.00.47 - added form for change path to excel.
+    0.00.48 - added FormMoveUser for better toring (container)paths, added versions.XML
+  </version>
+</info>

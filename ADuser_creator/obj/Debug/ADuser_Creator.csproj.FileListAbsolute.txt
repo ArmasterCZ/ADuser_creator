@@ -15,3 +15,5 @@ D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_crea
 D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.Properties.Resources.resources
 D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.exe
 D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.pdb
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.FormChangePath.resources
+D:\Users\jvaldauf\Documents\Visual Studio 2015\GITHUB\ADuser_creator\ADuser_creator\obj\Debug\ADuser_creator.FormMoveUser.resources

@@ -76,10 +76,28 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormChangePath.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChangePath.Designer.cs">
+      <DependentUpon>FormChangePath.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormMoveUser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMoveUser.Designer.cs">
+      <DependentUpon>FormMoveUser.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChangePath.resx">
+      <DependentUpon>FormChangePath.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormMoveUser.resx">
+      <DependentUpon>FormMoveUser.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -113,6 +131,7 @@
     <Content Include="Service References\System.Management.Automation.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="versions.xml" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
